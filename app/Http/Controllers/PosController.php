@@ -101,7 +101,7 @@ class PosController extends Controller
                 'total_amount' => $total,
                 'status' => $validated['payment_method'] === 'cash' ? 'processing' : 'pending',
                 'payment_method' => $validated['payment_method'],
-                'shipping_address' => null,
+                'shipping_address' => $validated['customer_name'] ?? 'Walk-in Customer',
             ]);
 
             foreach ($validated['items'] as $item) {

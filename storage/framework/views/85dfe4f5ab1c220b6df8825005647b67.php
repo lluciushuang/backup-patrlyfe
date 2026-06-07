@@ -1,8 +1,8 @@
-{{-- resources/views/catalog.blade.php --}}
-@extends('layouts.app')
-@section('title', 'Katalog Produk')
 
-@push('styles')
+
+<?php $__env->startSection('title', 'Katalog Produk'); ?>
+
+<?php $__env->startPush('styles'); ?>
 <style>
 .shop-layout {
     display: grid;
@@ -339,12 +339,12 @@
     /* 1 Kolom penuh di HP berlayar kecil */
 }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
-<div class="page-wrapper"> {{-- Pembungkus Pengaman Tengah Layar --}}
+<?php $__env->startSection('content'); ?>
+<div class="page-wrapper"> 
     <div class="breadcrumb">
-        <a href="{{ route('home') }}">HOME</a> <span>/</span> KATALOG
+        <a href="<?php echo e(route('home')); ?>">HOME</a> <span>/</span> KATALOG
     </div>
 <div class="shop-layout">
     <aside class="sidebar">
@@ -352,30 +352,30 @@
             <div class="sidebar-title">Kategori</div>
             <ul class="filter-list">
                 <li>
-                    <a href="{{ route('produk.index') }}" class="filter-item {{ !($selectedCategory ?? false) ? 'active' : '' }}">
-                        Semua Produk <span class="count">{{ number_format(\App\Models\Product::count()) }}</span>
+                    <a href="<?php echo e(route('produk.index')); ?>" class="filter-item <?php echo e(!($selectedCategory ?? false) ? 'active' : ''); ?>">
+                        Semua Produk <span class="count"><?php echo e(number_format(\App\Models\Product::count())); ?></span>
                     </a>
                 </li>
-                @foreach($categories as $cat)
+                <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <li>
-                    <a href="{{ route('produk.index', array_merge(request()->except(['category', 'page']), ['category' => $cat->id])) }}" class="filter-item {{ ($selectedCategory ?? false) == $cat->id ? 'active' : '' }}">
-                        {{ $cat->name }} <span class="count">{{ number_format($cat->products_count) }}</span>
+                    <a href="<?php echo e(route('produk.index', array_merge(request()->except(['category', 'page']), ['category' => $cat->id]))); ?>" class="filter-item <?php echo e(($selectedCategory ?? false) == $cat->id ? 'active' : ''); ?>">
+                        <?php echo e($cat->name); ?> <span class="count"><?php echo e(number_format($cat->products_count)); ?></span>
                     </a>
                 </li>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
         <div class="sidebar-card">
             <div class="sidebar-title">Rentang Harga</div>
             <div class="price-range-container">
                 <div class="range-values">
-                    <span>Rp <span id="minPriceLabel">{{ number_format($minPrice ?? $priceStats->min_price ?? 0, 0, ',', '.') }}</span></span>
-                    <span>Rp <span id="maxPriceLabel">{{ number_format($maxPrice ?? $priceStats->max_price ?? 1000000, 0, ',', '.') }}</span></span>
+                    <span>Rp <span id="minPriceLabel"><?php echo e(number_format($minPrice ?? $priceStats->min_price ?? 0, 0, ',', '.')); ?></span></span>
+                    <span>Rp <span id="maxPriceLabel"><?php echo e(number_format($maxPrice ?? $priceStats->max_price ?? 1000000, 0, ',', '.')); ?></span></span>
                 </div>
                 <div class="double-range-wrapper" style="position: relative; height: 30px; margin: 1rem 0;">
                     <div style="position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: rgba(242,239,230,0.15); border-radius: 2px; transform: translateY(-50%);"></div>
-                    <input type="range" id="priceRangeMin" min="{{ $priceStats->min_price ?? 0 }}" max="{{ $priceStats->max_price ?? 1000000 }}" value="{{ $minPrice ?? $priceStats->min_price ?? 0 }}" step="1000" style="position: absolute; width: 100%; height: 30px; background: transparent; pointer-events: none; -webkit-appearance: none; margin: 0;">
-                    <input type="range" id="priceRangeMax" min="{{ $priceStats->min_price ?? 0 }}" max="{{ $priceStats->max_price ?? 1000000 }}" value="{{ $maxPrice ?? $priceStats->max_price ?? 1000000 }}" step="1000" style="position: absolute; width: 100%; height: 30px; background: transparent; pointer-events: none; -webkit-appearance: none; margin: 0;">
+                    <input type="range" id="priceRangeMin" min="<?php echo e($priceStats->min_price ?? 0); ?>" max="<?php echo e($priceStats->max_price ?? 1000000); ?>" value="<?php echo e($minPrice ?? $priceStats->min_price ?? 0); ?>" step="1000" style="position: absolute; width: 100%; height: 30px; background: transparent; pointer-events: none; -webkit-appearance: none; margin: 0;">
+                    <input type="range" id="priceRangeMax" min="<?php echo e($priceStats->min_price ?? 0); ?>" max="<?php echo e($priceStats->max_price ?? 1000000); ?>" value="<?php echo e($maxPrice ?? $priceStats->max_price ?? 1000000); ?>" step="1000" style="position: absolute; width: 100%; height: 30px; background: transparent; pointer-events: none; -webkit-appearance: none; margin: 0;">
                 </div>
                 <style>
                     .double-range-wrapper input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--orange); border-radius: 50%; cursor: pointer; pointer-events: auto; }
@@ -384,17 +384,17 @@
             </div>
             <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                 <button type="button" onclick="applyPriceFilter()" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center;">Terapkan</button>
-                <a href="{{ route('produk.index') }}" class="btn btn-outline btn-sm" style="text-align: center; padding: 0.45rem 0.8rem; font-size: 0.75rem;">Reset</a>
+                <a href="<?php echo e(route('produk.index')); ?>" class="btn btn-outline btn-sm" style="text-align: center; padding: 0.45rem 0.8rem; font-size: 0.75rem;">Reset</a>
             </div>
-            <form id="priceFilterForm" action="{{ route('produk.index') }}" method="GET" style="display: none;">
-                @if($search ?? false)
-                <input type="hidden" name="search" value="{{ $search }}">
-                @endif
-                @if($selectedCategory ?? false)
-                <input type="hidden" name="category" value="{{ $selectedCategory }}">
-                @endif
-                <input type="hidden" name="min_price" id="hiddenMinPrice" value="{{ $minPrice ?? $priceStats->min_price ?? 0 }}">
-                <input type="hidden" name="max_price" id="hiddenMaxPrice" value="{{ $maxPrice ?? $priceStats->max_price ?? 1000000 }}">
+            <form id="priceFilterForm" action="<?php echo e(route('produk.index')); ?>" method="GET" style="display: none;">
+                <?php if($search ?? false): ?>
+                <input type="hidden" name="search" value="<?php echo e($search); ?>">
+                <?php endif; ?>
+                <?php if($selectedCategory ?? false): ?>
+                <input type="hidden" name="category" value="<?php echo e($selectedCategory); ?>">
+                <?php endif; ?>
+                <input type="hidden" name="min_price" id="hiddenMinPrice" value="<?php echo e($minPrice ?? $priceStats->min_price ?? 0); ?>">
+                <input type="hidden" name="max_price" id="hiddenMaxPrice" value="<?php echo e($maxPrice ?? $priceStats->max_price ?? 1000000); ?>">
             </form>
             <script>
                 const sliderMin = document.getElementById('priceRangeMin');
@@ -439,8 +439,8 @@
 
     <main class="shop-main">
         <div class="shop-topbar">
-            <div style="font-size:0.82rem; color:var(--gray-mid);">Menampilkan <strong>{{ $products->firstItem() ?? 0 }}–{{ $products->lastItem() ?? 0 }}</strong> dari
-                <strong>{{ $products->total() }}</strong> produk</div>
+            <div style="font-size:0.82rem; color:var(--gray-mid);">Menampilkan <strong><?php echo e($products->firstItem() ?? 0); ?>–<?php echo e($products->lastItem() ?? 0); ?></strong> dari
+                <strong><?php echo e($products->total()); ?></strong> produk</div>
             <select class="sort-select">
                 <option>Terlaris</option>
                 <option>Harga Terendah</option>
@@ -448,34 +448,34 @@
         </div>
 
         <div class="product-grid">
-            @foreach($products as $p)
-            <a href="{{ route('produk.show', $p->id) }}" class="prod-card">
+            <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <a href="<?php echo e(route('produk.show', $p->id)); ?>" class="prod-card">
                 <div class="prod-img">
-                    @if($p->images->count() > 0)
-                        <img src="{{ asset('storage/' . $p->images->first()->image_path) }}" alt="{{ $p->name }}">
-                    @else
+                    <?php if($p->images->count() > 0): ?>
+                        <img src="<?php echo e(asset('storage/' . $p->images->first()->image_path)); ?>" alt="<?php echo e($p->name); ?>">
+                    <?php else: ?>
                         <svg width="80" height="80" viewBox="0 0 100 100" class="prod-img-ph"
                             xmlns="http://www.w3.org/2000/svg">
                             <rect x="15" y="15" width="70" height="70" rx="4" fill="none" stroke="#F2EFE6"
                                 stroke-width="1.5" opacity="0.3" />
                         </svg>
-                    @endif
+                    <?php endif; ?>
                 </div>
                 <div class="prod-body">
-                    <div class="prod-brand">{{ $p->brand }}</div>
-                    <div class="prod-name">{{ $p->name }}</div>
-                    <div class="prod-spec">Stok: {{ $p->current_stock }} {{ $p->unit }}</div>
+                    <div class="prod-brand"><?php echo e($p->brand); ?></div>
+                    <div class="prod-name"><?php echo e($p->name); ?></div>
+                    <div class="prod-spec">Stok: <?php echo e($p->current_stock); ?> <?php echo e($p->unit); ?></div>
                     <div class="prod-rating"><span class="s">★</span> 4.8</div>
 <div class="prod-footer-price">
                       <div>
-                          @php 
+                          <?php 
                               $tierPrice = $p->prices->where('price_level', $tierPriceLevel)->first()?->price ?? $p->base_price ?? 0;
                               $level1Price = $p->prices->where('price_level', 1)->first()?->price ?? $p->base_price ?? 0;
-                          @endphp
-                          @if($tierPriceLevel > 1)
-                               <div class="prod-price-old">Rp {{ number_format($level1Price, 0, ',', '.') }}</div>
-                           @endif
-                           <div class="prod-price">Rp {{ number_format($tierPrice, 0, ',', '.') }}</div>
+                          ?>
+                          <?php if($tierPriceLevel > 1): ?>
+                               <div class="prod-price-old">Rp <?php echo e(number_format($level1Price, 0, ',', '.')); ?></div>
+                           <?php endif; ?>
+                           <div class="prod-price">Rp <?php echo e(number_format($tierPrice, 0, ',', '.')); ?></div>
                       </div>
                       <button class="prod-add-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                   stroke-width="2.5">
@@ -484,12 +484,14 @@
                       </div>
                  </div>
              </a>
-             @endforeach
+             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
         <div class="pagination">
-            {{ $products->links('pagination::default') }}
+            <?php echo e($products->links('pagination::default')); ?>
+
         </div>
     </main>
 </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\lenna\Herd\partlyfe_satu\resources\views/catalog.blade.php ENDPATH**/ ?>

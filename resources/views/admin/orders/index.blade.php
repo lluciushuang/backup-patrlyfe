@@ -14,6 +14,7 @@
     .status-processing { background: rgba(0,123,255,0.2); color: #007bff; }
     .status-shipped { background: rgba(40,167,69,0.2); color: #28a745; }
     .status-delivered { background: rgba(46,204,113,0.2); color: var(--green); }
+    .status-done { background: rgba(108,117,125,0.2); color: #6c757d; }
     .status-cancelled { background: rgba(220,53,69,0.2); color: #dc3545; }
 </style>
 @endpush

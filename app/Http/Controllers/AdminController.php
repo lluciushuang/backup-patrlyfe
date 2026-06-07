@@ -37,7 +37,7 @@ class AdminController extends Controller
         $totalOrders = Transaction::where('status', '!=', 'cancelled')->count();
 
         $todayRevenue = Transaction::whereDate('created_at', today())
-            ->whereIn('status', ['processing', 'shipped', 'delivered'])
+            ->whereIn('status', ['processing', 'shipped', 'delivered', 'done'])
             ->sum('total_amount');
 
         $pendingOrders = Transaction::with('user')
@@ -64,7 +64,7 @@ class AdminController extends Controller
                 MONTH(created_at) as month,
                 SUM(total_amount) as total
             ')
-            ->whereIn('status', ['processing', 'shipped', 'delivered'])
+            ->whereIn('status', ['processing', 'shipped', 'delivered', 'done'])
             ->groupBy('year', 'month')
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
@@ -106,7 +106,7 @@ class AdminController extends Controller
             ->get();
 
 $topCustomers = Transaction::selectRaw('user_id, SUM(total_amount) as total_spent, COUNT(*) as order_count')
-            ->whereIn('status', ['processing', 'shipped', 'delivered'])
+            ->whereIn('status', ['processing', 'shipped', 'delivered', 'done'])
             ->groupBy('user_id')
             ->orderBy('total_spent', 'desc')
             ->limit(5)
@@ -437,7 +437,7 @@ $topCustomers = Transaction::selectRaw('user_id, SUM(total_amount) as total_spen
         $order = Transaction::findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+            'status' => 'required|in:pending,processing,shipped,delivered,done,cancelled',
         ]);
 
         $order->update(['status' => $validated['status']]);
@@ -597,7 +597,7 @@ $topCustomers = Transaction::selectRaw('user_id, SUM(total_amount) as total_spen
                 MONTH(created_at) as month,
                 SUM(total_amount) as total
             ')
-            ->whereIn('status', ['processing', 'shipped', 'delivered'])
+            ->whereIn('status', ['processing', 'shipped', 'delivered', 'done'])
             ->groupBy('year', 'month')
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
@@ -727,7 +727,7 @@ $topCustomers = Transaction::selectRaw('user_id, SUM(total_amount) as total_spen
             'totalProducts' => Product::count(),
             'totalOrders' => Transaction::where('status', '!=', 'cancelled')->count(),
             'todayRevenue' => Transaction::whereDate('created_at', today())
-                ->whereIn('status', ['processing', 'shipped', 'delivered'])
+                ->whereIn('status', ['processing', 'shipped', 'delivered', 'done'])
                 ->sum('total_amount'),
             'pendingOrdersCount' => Transaction::where('status', 'pending')->count(),
             'lowStockCount' => Product::where('current_stock', '<=', 5)->count(),

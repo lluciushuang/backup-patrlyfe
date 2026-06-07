@@ -1,7 +1,6 @@
-@extends('layouts.app')
-@section('title', 'Riwayat Transaksi')
+<?php $__env->startSection('title', 'Riwayat Transaksi'); ?>
 
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .tx-container { margin-top: 1rem; }
     .tx-header {
@@ -70,18 +69,18 @@
     .filter-tab:hover { border-color: var(--orange); color: var(--off-white); }
     .filter-tab.active { background: var(--orange); border-color: var(--orange); color: white; }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="page-wrapper">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-        <a href="{{ route('produk.index') }}" class="btn btn-outline btn-sm" style="background: var(--orange); color: var(--off-white); border: none; font-size: 0.85rem; padding: 0.5rem 1rem;">
+        <a href="<?php echo e(route('produk.index')); ?>" class="btn btn-outline btn-sm" style="background: var(--orange); color: var(--off-white); border: none; font-size: 0.85rem; padding: 0.5rem 1rem;">
             ← KEMBALI KE PRODUK
         </a>
     </div>
     <div class="tx-container">
         <div class="breadcrumb">
-            <a href="{{ route('home') }}">HOME</a> <span>/</span> TRANSAKSI
+            <a href="<?php echo e(route('home')); ?>">HOME</a> <span>/</span> TRANSAKSI
         </div>
 
     <div class="tx-header">
@@ -89,46 +88,49 @@
     </div>
 
     <div class="filter-tabs">
-        <a href="{{ route('transactions.index') }}" class="filter-tab {{ !$statusFilter ? 'active' : '' }}">Semua</a>
-        <a href="{{ route('transactions.index', ['status' => 'menunggu']) }}" class="filter-tab {{ $statusFilter == 'menunggu' ? 'active' : '' }}">Menunggu</a>
-        <a href="{{ route('transactions.index', ['status' => 'diproses']) }}" class="filter-tab {{ $statusFilter == 'diproses' ? 'active' : '' }}">Diproses</a>
-        <a href="{{ route('transactions.index', ['status' => 'gagal']) }}" class="filter-tab {{ $statusFilter == 'gagal' ? 'active' : '' }}">Gagal/Dibatalkan</a>
+        <a href="<?php echo e(route('transactions.index')); ?>" class="filter-tab <?php echo e(!$statusFilter ? 'active' : ''); ?>">Semua</a>
+        <a href="<?php echo e(route('transactions.index', ['status' => 'menunggu'])); ?>" class="filter-tab <?php echo e($statusFilter == 'menunggu' ? 'active' : ''); ?>">Menunggu</a>
+        <a href="<?php echo e(route('transactions.index', ['status' => 'diproses'])); ?>" class="filter-tab <?php echo e($statusFilter == 'diproses' ? 'active' : ''); ?>">Diproses</a>
+        <a href="<?php echo e(route('transactions.index', ['status' => 'gagal'])); ?>" class="filter-tab <?php echo e($statusFilter == 'gagal' ? 'active' : ''); ?>">Gagal/Dibatalkan</a>
     </div>
 
-    @if($transactions->isEmpty())
+    <?php if($transactions->isEmpty()): ?>
     <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <h3 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.5rem;">BELUM ADA TRANSAKSI</h3>
         <p>Anda belum memiliki transaksi apapun.</p>
-        <a href="{{ route('produk.index') }}" class="btn btn-primary btn-sm" style="margin-top: 1rem;">Mulai Belanja</a>
+        <a href="<?php echo e(route('produk.index')); ?>" class="btn btn-primary btn-sm" style="margin-top: 1rem;">Mulai Belanja</a>
     </div>
-    @else
+    <?php else: ?>
 
     <div class="tx-list">
-        @foreach($transactions as $tx)
-        <a href="{{ route('transactions.invoice', $tx->invoice_number) }}" class="tx-card" style="text-decoration: none; color: inherit;">
+        <?php $__currentLoopData = $transactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tx): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <a href="<?php echo e(route('transactions.invoice', $tx->invoice_number)); ?>" class="tx-card" style="text-decoration: none; color: inherit;">
             <div>
-                <div class="tx-id">{{ $tx->invoice_number }}</div>
-                <div class="tx-date">{{ $tx->created_at->format('d M Y, H:i') }}</div>
+                <div class="tx-id"><?php echo e($tx->invoice_number); ?></div>
+                <div class="tx-date"><?php echo e($tx->created_at->format('d M Y, H:i')); ?></div>
             </div>
             <div>
-                <div class="tx-name">{{ $tx->details->count() }} Produk</div>
-                <div style="font-size: 0.72rem; color: var(--gray-mid);">{{ $tx->details->sum('qty') }} unit total</div>
+                <div class="tx-name"><?php echo e($tx->details->count()); ?> Produk</div>
+                <div style="font-size: 0.72rem; color: var(--gray-mid);"><?php echo e($tx->details->sum('qty')); ?> unit total</div>
             </div>
             <div>
-                <span class="tx-status {{ $tx->status }}">{{ strtoupper(str_replace('_', ' ', $tx->status)) }}</span>
+                <span class="tx-status <?php echo e($tx->status); ?>"><?php echo e(strtoupper(str_replace('_', ' ', $tx->status))); ?></span>
             </div>
             <div>
-                <div class="tx-total">Rp {{ number_format($tx->total_amount, 0, ',', '.') }}</div>
+                <div class="tx-total">Rp <?php echo e(number_format($tx->total_amount, 0, ',', '.')); ?></div>
             </div>
         </a>
-        @endforeach
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
 
     <div style="display: flex; justify-content: center; margin-top: 2rem;">
-        {{ $transactions->links() }}
+        <?php echo e($transactions->links()); ?>
+
     </div>
-    @endif
+    <?php endif; ?>
 </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\lenna\Herd\partlyfe_satu\resources\views/transactions/index.blade.php ENDPATH**/ ?>

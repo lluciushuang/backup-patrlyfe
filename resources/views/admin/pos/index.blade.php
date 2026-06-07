@@ -84,6 +84,18 @@
         background: rgba(232,82,26,0.1);
         color: var(--orange);
     }
+    #customerSearchResults {
+        max-height: 150px;
+        overflow-y: auto;
+    }
+    .customer-result {
+        padding: 0.5rem;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+    }
+    .customer-result:hover {
+        background: rgba(232,82,26,0.1);
+    }
 </style>
 @endpush
 
@@ -103,6 +115,15 @@
     
     <div class="pos-cart">
         <div style="padding:1rem; border-bottom:1px solid var(--border); font-weight:bold; color:var(--orange);">🛒 Keranjang POS</div>
+        
+<div style="padding:1rem; border-bottom:1px solid var(--border);">
+             <input type="text" id="customerSearch" class="form-control" placeholder="Cari nama pelanggan..." onkeyup="searchCustomers()">
+             <div id="customerSearchResults"></div>
+             <input type="hidden" id="selectedUserId" value="">
+             <input type="text" id="walkInName" class="form-control" placeholder="Nama Walk-in Customer" style="margin-top:0.5rem; display:none;">
+             <div id="selectedCustomer" style="margin-top:0.5rem; font-size:0.9rem; color:var(--gray-mid);"></div>
+         </div>
+        
         <div class="cart-items" id="cartItems"></div>
         <div class="cart-footer">
             <div style="display:flex; justify-content:space-between; margin-bottom:1rem; font-size:1.2rem;">
@@ -161,11 +182,47 @@
     let currentPage = 1;
     let isLoading = false;
     let selectedPayment = 'cash';
+    let selectedUserId = null;
+    let walkInCustomerName = '';
 
     function selectPayment(method) {
         selectedPayment = method;
         document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
         document.getElementById('payment' + method.charAt(0).toUpperCase() + method.slice(1)).classList.add('selected');
+    }
+
+    function searchCustomers() {
+        const query = document.getElementById('customerSearch').value;
+        if (query.length < 2) {
+            document.getElementById('customerSearchResults').innerHTML = '';
+            return;
+        }
+        fetch('{{ route('admin.users.search') }}?q=' + encodeURIComponent(query))
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('customerSearchResults').innerHTML = 
+                    '<div class="customer-result" onclick="selectCustomer(null, \'Walk-in Customer\', \'-\')">+ Tambah Walk-in Customer</div>' +
+                    data.users.map(u => `
+                        <div class="customer-result" onclick="selectCustomer(${u.id}, '${u.name}', '${u.email}')">${u.name} - ${u.email}</div>
+                    `).join('');
+            });
+    }
+
+    function selectCustomer(id, name, phone) {
+        selectedUserId = id;
+        walkInCustomerName = name;
+        document.getElementById('selectedUserId').value = id || '';
+        document.getElementById('selectedCustomer').textContent = 'Pelanggan: ' + name;
+        document.getElementById('customerSearchResults').innerHTML = '';
+        document.getElementById('customerSearch').value = '';
+        const walkInInput = document.getElementById('walkInName');
+        if (id === null) {
+            walkInInput.style.display = 'block';
+            walkInInput.value = name === 'Walk-in Customer' ? '' : name;
+            walkInInput.placeholder = 'Nama Walk-in Customer';
+        } else {
+            walkInInput.style.display = 'none';
+        }
     }
 
     function renderProducts(products) {
@@ -337,13 +394,22 @@
     }
 
     function processCheckout(extraData) {
+        const walkInNameInput = document.getElementById('walkInName');
+        const customerName = selectedUserId ? null : (walkInNameInput.value || 'Walk-in Customer');
+        const data = {
+            items: cart,
+            user_id: selectedUserId,
+            customer_name: customerName,
+            ...extraData
+        };
+        
         fetch('{{ route('admin.pos.store') }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify({items: cart, ...extraData})
+            body: JSON.stringify(data)
         })
         .then(r => r.json())
         .then(data => {
@@ -354,6 +420,7 @@
                             adminToast.fire({icon:'success', title:'Pembayaran berhasil!'});
                             cart = [];
                             renderCart();
+                            resetCustomer();
                         },
                         onPending: function(result) {
                             adminToast.fire({icon:'info', title:'Menunggu pembayaran...'});
@@ -366,11 +433,20 @@
                     adminToast.fire({icon:'success', title:'Transaksi berhasil!'});
                     cart = [];
                     renderCart();
+                    resetCustomer();
                 }
             } else {
                 adminToast.fire({icon:'error', title:data.message});
             }
         });
+    }
+
+    function resetCustomer() {
+        selectedUserId = null;
+        walkInCustomerName = '';
+        document.getElementById('selectedUserId').value = '';
+        document.getElementById('selectedCustomer').textContent = '';
+        document.getElementById('customerSearch').value = '';
     }
 
     function openProductSearch() {

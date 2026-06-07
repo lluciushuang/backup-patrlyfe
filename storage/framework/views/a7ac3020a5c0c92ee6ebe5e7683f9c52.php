@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Partlyfe') — Sparepart Motor</title>
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <title><?php echo $__env->yieldContent('title', 'Partlyfe'); ?> — Sparepart Motor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -294,12 +294,12 @@
             .promo-banner::before { display: none; }
         }
     </style>
-    @stack('styles')
+    <?php echo $__env->yieldPushContent('styles'); ?>
 </head>
 <body>
 
     <nav class="nav">
-        <a href="{{ route('home') }}" class="nav-logo">PART<span>L</span>YFE</a>
+        <a href="<?php echo e(route('home')); ?>" class="nav-logo">PART<span>L</span>YFE</a>
         <div class="nav-search" style="position: relative;">
             <input type="text" id="searchInput" placeholder="Cari sparepart, merek, tipe motor..." autocomplete="off">
             <button class="nav-search-btn" id="searchBtn">
@@ -309,40 +309,40 @@
         </div>
         <div class="nav-spacer"></div>
         <div class="nav-icons">
-            <a href="{{ route('produk.index') }}" class="nav-icon-btn" title="Katalog Produk" style="font-size: 0.8rem; font-family: var(--font-mono); font-weight:bold; color:var(--orange); padding: 0 0.25rem;">SHOP</a>
+            <a href="<?php echo e(route('produk.index')); ?>" class="nav-icon-btn" title="Katalog Produk" style="font-size: 0.8rem; font-family: var(--font-mono); font-weight:bold; color:var(--orange); padding: 0 0.25rem;">SHOP</a>
             
-        @auth
+        <?php if(auth()->guard()->check()): ?>
             
-            @include('components.notif-dropdown')
+            <?php echo $__env->make('components.notif-dropdown', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-            <a href="{{ route('wishlist.index') }}" class="nav-icon-btn" title="Wishlist">
+            <a href="<?php echo e(route('wishlist.index')); ?>" class="nav-icon-btn" title="Wishlist">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                @if($wishlistCount ?? 0 > 0)
-                <span class="nav-badge">{{ ($wishlistCount ?? 0) > 9 ? '9+' : ($wishlistCount ?? 0) }}</span>
-                @endif
+                <?php if($wishlistCount ?? 0 > 0): ?>
+                <span class="nav-badge"><?php echo e(($wishlistCount ?? 0) > 9 ? '9+' : ($wishlistCount ?? 0)); ?></span>
+                <?php endif; ?>
             </a>
 
-            <a href="{{ route('cart.index') }}" class="nav-icon-btn" title="Keranjang">
+            <a href="<?php echo e(route('cart.index')); ?>" class="nav-icon-btn" title="Keranjang">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
-                @if($cartCount ?? 0 > 0)
-                <span class="nav-badge">{{ ($cartCount ?? 0) > 9 ? '9+' : ($cartCount ?? 0) }}</span>
-                @endif
+                <?php if($cartCount ?? 0 > 0): ?>
+                <span class="nav-badge"><?php echo e(($cartCount ?? 0) > 9 ? '9+' : ($cartCount ?? 0)); ?></span>
+                <?php endif; ?>
             </a>
 
-            <a href="{{ route('profile') }}" class="nav-avatar" title="Akun Saya">{{ substr(Auth::user()->name, 0, 1) }}</a>
-            @else
-            <a href="{{ route('login') }}" class="nav-icon-btn" title="Masuk/Daftar" style="font-size: 0.85rem;">
+            <a href="<?php echo e(route('profile')); ?>" class="nav-avatar" title="Akun Saya"><?php echo e(substr(Auth::user()->name, 0, 1)); ?></a>
+            <?php else: ?>
+            <a href="<?php echo e(route('login')); ?>" class="nav-icon-btn" title="Masuk/Daftar" style="font-size: 0.85rem;">
                 &#128100;
             </a>
-            @endauth
+            <?php endif; ?>
         </div>
     </nav>
 
-    {{-- KONTEN UTAMA DI-RENDER LANGSUNG TANPA PAKSAAN BOX SEBAGAI DEFAULT --}}
-    @yield('content')
+    
+    <?php echo $__env->yieldContent('content'); ?>
 
     <footer class="footer-mini">
-        &copy; {{ date('Y') }} PARTLYFE — Sparepart Motor Terpercaya Indonesia
+        &copy; <?php echo e(date('Y')); ?> PARTLYFE — Sparepart Motor Terpercaya Indonesia
     </footer>
 
     <script>
@@ -360,7 +360,7 @@
                 return;
             }
 
-            fetch('{{ route('api.search') }}?q=' + encodeURIComponent(query))
+            fetch('<?php echo e(route('api.search')); ?>?q=' + encodeURIComponent(query))
                 .then(r => r.json())
                 .then(data => {
                     if (data.length === 0) {
@@ -393,12 +393,12 @@
         });
 
         searchBtn.addEventListener('click', function() {
-            window.location.href = '{{ route('produk.index') }}' + (searchInput.value ? '?search=' + encodeURIComponent(searchInput.value) : '');
+            window.location.href = '<?php echo e(route('produk.index')); ?>' + (searchInput.value ? '?search=' + encodeURIComponent(searchInput.value) : '');
         });
 
         searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                window.location.href = '{{ route('produk.index') }}' + (searchInput.value ? '?search=' + encodeURIComponent(searchInput.value) : '');
+                window.location.href = '<?php echo e(route('produk.index')); ?>' + (searchInput.value ? '?search=' + encodeURIComponent(searchInput.value) : '');
             }
         });
 
@@ -416,7 +416,7 @@
     })();
     </script>
 
-@stack('scripts')
+<?php echo $__env->yieldPushContent('scripts'); ?>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
@@ -436,9 +436,9 @@
         }
     </script>
 
-    @include('components.ai-chat')
+    <?php echo $__env->make('components.ai-chat', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     
-    @auth
+    <?php if(auth()->guard()->check()): ?>
     
     <script>
     (function() {
@@ -482,6 +482,6 @@
         setInterval(refreshNotifications, 30000);
     })();
     </script>
-    @endauth
+    <?php endif; ?>
 </body>
-</html>
+</html><?php /**PATH C:\Users\lenna\Herd\partlyfe_satu\resources\views/layouts/app.blade.php ENDPATH**/ ?>
