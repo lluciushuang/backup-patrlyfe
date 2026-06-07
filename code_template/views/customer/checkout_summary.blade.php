@@ -8,6 +8,20 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#151513',
+            color: '#fff',
+            iconColor: '#E8521A'
+        });
+        function showToast(icon, title) { toast.fire({ icon, title }); }
+    </script>
     <style>
         .luxury-card-flat { background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 20px rgba(148, 163, 184, 0.04); }
         .glass-header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-b: 1px solid rgba(226, 232, 240, 0.8); }
@@ -222,7 +236,7 @@
                 document.getElementById('current-address-text').innerText = newAddress;
                 toggleAddressForm();
             } catch (error) {
-                alert('Gagal memperbarui alamat. Pastikan route API tersedia.');
+                showToast('error', 'Gagal memperbarui alamat. Pastikan route API tersedia.');
             } finally {
                 btn.innerHTML = 'Simpan Alamat';
                 btn.disabled = false;
@@ -269,11 +283,11 @@
                         onClose: () => { window.location.href = "/customer/transactions"; }
                     });
                 } else {
-                    alert(data.message || 'Gagal menyiapkan data tagihan.');
+                    showToast('error', data.message || 'Gagal menyiapkan data tagihan.');
                 }
             } catch (e) {
                 console.error(e);
-                alert("Koneksi ke sistem pembayaran bermasalah.");
+                showToast('error', 'Koneksi ke sistem pembayaran bermasalah.');
             } finally {
                 this.innerHTML = originalHTML;
                 this.disabled = false;

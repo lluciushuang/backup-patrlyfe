@@ -1,5 +1,5 @@
-{{-- resources/views/cart/index.blade.php ── CARTS RE-DESIGN INDUSTRIAL SEAMLESS --}}
 @extends('layouts.app')
+
 @section('title', 'Keranjang Belanja')
 
 @push('styles')
@@ -15,7 +15,6 @@
         .cart-layout { grid-template-columns: 1fr; }
     }
 
-    /* Header & Control */
     .cart-header-row {
         display: flex;
         align-items: baseline;
@@ -54,7 +53,6 @@
         color: var(--gray-light);
     }
 
-    /* Cart Items Loop Styles */
     .cart-items-stack {
         display: flex;
         flex-direction: column;
@@ -79,7 +77,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--gray-mid);
+        overflow: hidden;
+        padding: 0.25rem;
+    }
+    .cart-item-img-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
     .cart-item-details {
         display: flex;
@@ -119,7 +123,6 @@
         text-decoration: line-through;
     }
 
-    /* Quantity Industrial Controls */
     .ci-controls-wrapper {
         display: flex;
         align-items: center;
@@ -165,7 +168,6 @@
     }
     .ci-action-icon-btn:hover { color: var(--red); }
 
-    /* ── ORDER SUMMARY BLOCK ── */
     .summary-card {
         background: #111110;
         border: 1px solid rgba(242, 239, 230, 0.05);
@@ -220,58 +222,116 @@
         line-height: 1.4;
     }
     .free-shipping-pill svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .empty-cart {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-mid);
+    }
+    .empty-cart svg {
+        width: 80px;
+        height: 80px;
+        opacity: 0.3;
+        margin-bottom: 1.5rem;
+    }
+    .empty-cart-title {
+        font-family: var(--font-display);
+        font-size: 1.8rem;
+        color: var(--off-white);
+        margin-bottom: 0.5rem;
+    }
+
+    .stock-warning {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: var(--red);
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        font-family: var(--font-mono);
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="page-wrapper"> {{-- Pembungkus Pengaman Tengah Layar --}}
-<div class="breadcrumb">
-    <a href="{{ route('home') }}">HOME</a> <span>/</span> KERANJANG
-</div>
+<div class="page-wrapper">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <a href="{{ route('produk.index') }}" class="btn btn-outline btn-sm" style="background: var(--orange); color: var(--off-white); border: none; font-size: 0.85rem; padding: 0.5rem 1rem;">
+            ← KEMBALI KE PRODUK
+        </a>
+    </div>
+    <div class="breadcrumb">
+        <a href="{{ route('home') }}">HOME</a> <span>/</span> KERANJANG
+    </div>
 
 <div class="cart-layout">
-    {{-- BARANG DALAM KERANJANG --}}
     <div style="display: flex; flex-direction: column;">
         <div class="cart-header-row">
             <h1 class="cart-page-title">SHOPPING CART</h1>
-            <span class="cart-count-badge">2 ITEMS SELECTED</span>
+            <span class="cart-count-badge">
+                {{ $cartItems->count() }} ITEM{{ $cartItems->count() !== 1 ? 'S' : '' }}
+            </span>
         </div>
 
-        <div class="cart-actions-bar">
+        @if($cartItems->isEmpty())
+        <div class="empty-cart">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <h3 class="empty-cart-title">KERANJANG KOSONG</h3>
+            <p style="margin-bottom: 2rem;">Belum ada produk di keranjang Anda.</p>
+            <a href="{{ route('produk.index') }}" class="btn btn-primary">Lihat Katalog Produk</a>
+        </div>
+        @else
+
+        <div class="cart-item-card" style="background: rgba(242,239,230,0.02); border: none; padding: 0.75rem 1.25rem;">
             <label class="check-wrapper">
                 <input type="checkbox" checked style="accent-color: var(--orange);">
                 <span>Pilih Semua Barang</span>
             </label>
-            <a href="#" style="color: var(--gray-mid); text-decoration: none; font-size: 0.82rem;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray-mid)'">Hapus Pilihan</a>
+            <span></span>
         </div>
 
-        <div class="cart-items-stack">
-            @foreach([
-                ['RACING BOY', 'Shockbreaker RCB Black Series WD Line 330mm', 'Rp 1.450.000', 'Rp 1.680.000', 1],
-                ['DIZZY MECHANIC', 'Piston Kit Bore-Up Karburator Kit Set V.2', 'Rp 320.000', null, 2]
-            ] as [$brand, $name, $price, $old, $qty])
-            <div class="cart-item-card">
+        <div class="cart-items-stack" id="cartItemsContainer">
+            @foreach($cartItems as $item)
+            @php
+                $originalPrice = $item->product->prices->where('price_level', 1)->first()?->price ?? $item->product->base_price ?? 0;
+                $displayPrice = $item->product->prices->where('price_level', $tierPriceLevel)->first()?->price ?? $originalPrice;
+                $itemSubtotal = $displayPrice * $item->qty;
+            @endphp
+            <div class="cart-item-card" data-cart-id="{{ $item->id }}" data-product-id="{{ $item->product_id }}">
                 <input type="checkbox" checked style="accent-color: var(--orange); cursor: pointer;">
+
                 <div class="cart-item-img-box">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    @if($item->product->images->count() > 0)
+                        <img src="{{ asset('storage/' . $item->product->images->first()->image_path) }}" alt="{{ $item->product->name }}">
+                    @else
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    @endif
                 </div>
+
                 <div class="cart-item-details">
                     <div>
-                        <span class="ci-meta-brand">{{ $brand }}</span>
-                        <h3 class="ci-meta-name">{{ $name }}</h3>
+                        <span class="ci-meta-brand">{{ $item->product->brand }}</span>
+                        <h3 class="ci-meta-name">{{ $item->product->name }}</h3>
                         <div class="ci-price-row">
-                            <span class="ci-price">{{ $price }}</span>
-                            @if($old)<span class="ci-price-old">{{ $old }}</span>@endif
+                            @if($tierPriceLevel > 1 && $displayPrice < $originalPrice)
+                                <span class="ci-price-old">Rp {{ number_format($originalPrice, 0, ',', '.') }}</span>
+                            @endif
+                            <span class="ci-price" id="price-{{ $item->id }}">Rp {{ number_format($displayPrice, 0, ',', '.') }}</span>
                         </div>
+                        @if($item->qty > $item->product->current_stock)
+                            <div class="stock-warning">
+                                ⚠ Stok tersisa: {{ $item->product->current_stock }} pcs
+                            </div>
+                        @endif
                     </div>
-                    
+
                     <div class="ci-controls-wrapper">
                         <div class="qty-stepper">
-                            <button class="qty-btn">−</button>
-                            <div class="qty-val">{{ $qty }}</div>
-                            <button class="qty-btn">+</button>
+                            <button class="qty-btn" onclick="updateCartQty({{ $item->id }}, {{ $item->qty - 1 }}, this)" {{ $item->qty <= 1 ? 'disabled' : '' }}>−</button>
+                            <div class="qty-val" id="qty-{{ $item->id }}">{{ $item->qty }}</div>
+                            <button class="qty-btn" onclick="updateCartQty({{ $item->id }}, {{ $item->qty + 1 }}, this)" {{ $item->qty >= $item->product->current_stock ? 'disabled' : '' }}>+</button>
                         </div>
-                        <button class="ci-action-icon-btn" title="Hapus Item">
+                        <button class="ci-action-icon-btn" title="Hapus Item" onclick="removeFromCart({{ $item->id }})">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         </button>
                     </div>
@@ -279,19 +339,15 @@
             </div>
             @endforeach
         </div>
+        @endif
     </div>
 
-    {{-- SUMMARY ORDER SIDEBAR --}}
     <aside class="summary-card">
         <h2 class="summary-title">RINGKASAN BELANJA</h2>
-        
+
         <div class="summary-row">
-            <span>Total Harga (3 Barang)</span>
-            <span style="font-family: var(--font-mono); color: var(--off-white);">Rp 2.090.000</span>
-        </div>
-        <div class="summary-row discount-text">
-            <span>Diskon Toko</span>
-            <span style="font-family: var(--font-mono);">-Rp 230.000</span>
+            <span>Total Harga ({{ $cartItems->sum('qty') }} Barang)</span>
+            <span style="font-family: var(--font-mono); color: var(--off-white);" id="summary-subtotal">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
         </div>
         <div class="summary-row">
             <span>Ongkos Kirim</span>
@@ -300,18 +356,99 @@
 
         <div class="free-shipping-pill">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            <span>Aman! Belanjamu di atas Rp 200.000, otomatis dapat gratis ongkir reguler.</span>
+            <span>Aman! Belanja di atas Rp 200.000, otomatis gratis ongkir reguler.</span>
         </div>
 
         <div class="summary-row total-bill">
             <span>Total Harga</span>
-            <span class="price-val">Rp 1.860.000</span>
+            <span class="price-val" id="summary-total">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
         </div>
 
-        <button class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1.5rem; justify-content: center;">
+        <a href="{{ route('checkout') }}" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1.5rem; justify-content: center; text-align: center;">
             Lanjut ke Checkout
-        </button>
+        </a>
     </aside>
 </div>
 </div>
+
+@push('scripts')
+<script>
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+
+function updateCartQty(cartId, newQty, btnElement) {
+    if (newQty < 1) {
+        removeFromCart(cartId);
+        return;
+    }
+
+    fetch(`/customer/cart/${cartId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ qty: newQty }),
+    })
+    .then(res => res.json())
+.then(data => {
+                    if (data.success) {
+                        document.getElementById(`qty-${cartId}`).textContent = newQty;
+                        document.getElementById(`price-${cartId}`).textContent = 'Rp ' + (data.subtotal || 0).toLocaleString('id-ID');
+                        if (data.total) {
+                            document.getElementById('summary-subtotal').textContent = 'Rp ' + data.total.toLocaleString('id-ID');
+                            document.getElementById('summary-total').textContent = 'Rp ' + data.total.toLocaleString('id-ID');
+                        }
+                    } else {
+                        showCartToast('error', 'Gagal', data.message || 'Gagal memperbarui kuantitas');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showCartToast('error', 'Error', 'Terjadi kesalahan jaringan');
+                });
+}
+
+function showCartToast(type, title, message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:80px;right:24px;z-index:9999;background:#111110;border:1px solid rgba(242,239,230,0.1);border-left:3px solid ' + (type==='error'?'#e74c4c':'#2ecc71') + ';padding:1rem 1.25rem;border-radius:4px;color:#F2EFE6;';
+    toast.innerHTML = '<div style="font-weight:600;font-size:0.85rem;margin-bottom:0.25rem;">' + title + '</div><div style="font-size:0.75rem;color:#888880;">' + message + '</div>';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function removeFromCart(cartId) {
+    if (!confirm('Hapus item ini dari keranjang?')) return;
+
+    fetch(`/customer/cart/${cartId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const card = document.querySelector(`[data-cart-id="${cartId}"]`);
+            if (card) {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    card.remove();
+                    if (document.getElementById('cartItemsContainer').children.length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            }
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showCartToast('error', 'Error', 'Terjadi kesalahan jaringan');
+    });
+}
+</script>
+@endpush
 @endsection

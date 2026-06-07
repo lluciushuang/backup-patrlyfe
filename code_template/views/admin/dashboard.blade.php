@@ -31,11 +31,7 @@
                     <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Administrator</p>
                 </div>
                 <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center font-black text-slate-900 border-2 border-indigo-400/50">
-<<<<<<< HEAD
                     {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
-=======
-                    A
->>>>>>> c8d47de4e29a6d6e906a2a0c9be803382d6b537d
                 </div>
             </div>
         </header>
@@ -71,13 +67,8 @@
 
                 <div class="glass-card rounded-3xl p-6 relative overflow-hidden group">
                     <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Total Produk</p>
-<<<<<<< HEAD
                     <h3 class="text-2xl font-black text-white tracking-tight">{{ $totalProducts }} <span class="text-sm font-normal text-slate-500 italic">SKU</span></h3>
                     <p class="text-[10px] text-rose-500 mt-2 font-bold">{{ $lowStockCount }} Stok Habis/Menipis</p>
-=======
-                    <h3 class="text-2xl font-black text-white tracking-tight">1.240 <span class="text-sm font-normal text-slate-500 italic">SKU</span></h3>
-                    <p class="text-[10px] text-slate-500 mt-2 font-bold">12 Stok Habis</p>
->>>>>>> c8d47de4e29a6d6e906a2a0c9be803382d6b537d
                 </div>
 
                 <div class="glass-card rounded-3xl p-6 relative overflow-hidden group border-l-4 border-l-indigo-500">

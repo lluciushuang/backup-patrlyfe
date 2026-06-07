@@ -10,6 +10,19 @@
     <script type="text/javascript"
             src="https://app.sandbox.midtrans.com/snap/snap.js"
             data-client-key="{{ config('midtrans.client_key') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#151513',
+            color: '#fff',
+            iconColor: '#E8521A'
+        });
+    </script>
 </head>
 <body class="bg-[#020617] font-sans text-slate-200 h-screen flex items-center justify-center selection:bg-emerald-500 selection:text-white">
 
@@ -54,19 +67,18 @@
             // Memanggil Snap menggunakan Token yang dikirim dari Controller
             window.snap.pay('{{ $snapToken }}', {
                 onSuccess: function(result){
-                    alert("Pembayaran Berhasil!");
-                    // Nanti arahkan ke halaman sukses / update DB
+                    toast.fire({ icon: 'success', title: 'Pembayaran Berhasil!' });
                     window.location.href = "{{ route('customer.dashboard') }}";
                 },
                 onPending: function(result){
-                    alert("Menunggu pembayaran Anda!");
+                    toast.fire({ icon: 'info', title: 'Menunggu pembayaran Anda!' });
                     window.location.href = "{{ route('customer.dashboard') }}";
                 },
                 onError: function(result){
-                    alert("Pembayaran gagal!");
+                    toast.fire({ icon: 'error', title: 'Pembayaran gagal!' });
                 },
                 onClose: function(){
-                    alert('Anda menutup popup tanpa menyelesaikan pembayaran');
+                    toast.fire({ icon: 'warning', title: 'Anda menutup popup tanpa menyelesaikan pembayaran' });
                 }
             });
         };

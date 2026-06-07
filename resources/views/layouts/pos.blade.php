@@ -68,7 +68,7 @@
                     <span>Total:</span>
                     <span id="cartTotal" style="color:var(--orange); font-weight:bold;">Rp 0</span>
                 </div>
-                <button class="btn" style="width:100%; padding:1rem; font-size:1.1rem;" onclick="alert('Struk tercetak! Transaksi Disimpan.')">Bayar Sekarang</button>
+                <button class="btn" style="width:100%; padding:1rem; font-size:1.1rem;" onclick="adminToast.fire({ icon: 'success', title: 'Struk tercetak! Transaksi Disimpan.' })">Bayar Sekarang</button>
             </div>
         </div>
     </div>

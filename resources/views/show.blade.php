@@ -1,4 +1,5 @@
-{{-- resources/views/show.blade.php ── CLEAN INDUSTRIAL DETAIL PRODUCT WITH ECO-DATABASE FORM --}}
+{{-- resources/views/show.blade.php --}}
+@php use Illuminate\Support\Str; @endphp
 @extends('layouts.app')
 
 @section('title', $product->name ?? 'Detail Produk')
@@ -33,6 +34,12 @@
         margin-bottom: 1rem;
         position: relative;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        padding: 1rem;
+    }
+    .main-preview-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
     .main-preview-svg {
         opacity: 0.15;
@@ -62,6 +69,12 @@
         justify-content: center;
         cursor: pointer;
         transition: all 0.2s ease;
+        padding: 0.25rem;
+    }
+    .thumb-cube img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
     .thumb-cube:hover { border-color: rgba(232, 82, 26, 0.4); }
     .thumb-cube.active { border-color: var(--orange); background: rgba(232, 82, 26, 0.02); }
@@ -290,11 +303,16 @@
 
 @section('content')
 <div class="page-wrapper"> {{-- Pembungkus Pengaman Tengah Layar --}}
-<div class="breadcrumb">
-    <a href="{{ route('home') }}">HOME</a> <span>/</span> 
-    <a href="{{ route('produk.index') }}">SPARES</a> <span>/</span> 
-    {{ strtoupper($product->name ?? 'KAMPAS REM BREMBO VARIO') }}
-</div>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <a href="{{ route('produk.index') }}" class="btn btn-outline btn-sm" style="background: var(--orange); color: var(--off-white); border: none; font-size: 0.85rem; padding: 0.5rem 1rem;">
+            ← KEMBALI KE PRODUK
+        </a>
+    </div>
+    <div class="breadcrumb">
+        <a href="{{ route('home') }}">HOME</a> <span>/</span> 
+        <a href="{{ route('produk.index') }}">SPARES</a> <span>/</span> 
+        {{ strtoupper($product->name ?? 'KAMPAS REM BREMBO VARIO') }}
+    </div>
 
 <div class="detail-grid-layout">
     
@@ -304,21 +322,21 @@
             <span class="badge badge-orange floating-badge">TERLARIS</span>
             
             @if(isset($product) && $product->images->count() > 0)
-                <img src="{{ asset('storage/' . $product->images->first()->image_path) }}" alt="{{ $product->name }}" style="width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 5;">
+                <img src="{{ asset('storage/' . $product->images->first()->image_path) }}" alt="{{ $product->name }}" class="main-preview-img">
             @else
                 <svg class="main-preview-svg" width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="50" cy="50" r="42" fill="none" stroke="#F2EFE6" stroke-width="1.2"/>
                     <circle cx="50" cy="50" r="25" fill="none" stroke="#F2EFE6" stroke-width="0.8" stroke-dasharray="2,2"/>
                     <path d="M50 10 L50 90 M10 50 L90 50" stroke="#F2EFE6" stroke-width="0.5" opacity="0.3"/>
-                </svg>
-            @endif
-        </div>
+</svg>
+                @endif
+            </div>
         
         <div class="gallery-thumbs-row">
             @if(isset($product) && $product->images->count() > 0)
                 @foreach($product->images->take(4) as $index => $img)
                 <div class="thumb-cube {{ $index === 0 ? 'active' : '' }}">
-                    <img src="{{ asset('storage/' . $img->image_path) }}" alt="thumb" style="width: 80%; height: 80%; object-fit: contain;">
+                    <img src="{{ asset('storage/' . $img->image_path) }}" alt="thumb">
                 </div>
                 @endforeach
             @else
@@ -340,49 +358,35 @@
             {{ $product->brand ?? 'BREMBO' }} · SKU: {{ $product->item_code ?? 'BRM-VP125-SET' }}
         </div>
         
-        <h1 class="prod-main-title">
+        <h1 class="prod-main-title" style="margin-bottom: 0;">
             {{ $product->name ?? 'Kampas Rem Cakram Honda Vario 125 — Depan & Belakang' }}
         </h1>
         
         <div class="prod-rating-meta">
-            <span style="color: var(--orange);">⭐⭐⭐⭐⭐ <strong style="color: var(--off-white); margin-left: 0.25rem;">4.9</strong></span>
+            <span style="color: var(--orange);">
+                ⭐ <strong style="color: var(--off-white); margin-left: 0.25rem;">{{ number_format($product->rating ?? 0, 1) }}</strong>
+            </span>
             <div class="meta-divider"></div>
-            <span>{{ number_format($product->reviews_count ?? 1240) }} Ulasan Verified</span>
+            <span>{{ number_format($product->reviews_count ?? 0) }} Ulasan Verified</span>
             <div class="meta-divider"></div>
-            <span>Terjual {{ number_format($product->sold_count ?? 8420) }} Unit</span>
+            <span>Terjual {{ number_format($product->sold_count ?? 0) }} Unit</span>
         </div>
 
         <div class="price-plate">
             @php
-                $retailPrice = isset($product) ? $product->prices->where('price_level', 1)->first()->price ?? 0 : 79000;
-                $basePrice = isset($product) ? $product->base_price : 95000;
+                $tierPrice = $product->prices->where('price_level', $tierPriceLevel)->first()?->price ?? $product->base_price ?? 0;
+                $level1Price = $product->prices->where('price_level', 1)->first()?->price ?? $product->base_price ?? 0;
             @endphp
-            @if($basePrice > $retailPrice)
-                <div class="price-was">Rp {{ number_format($basePrice, 0, ',', '.') }}</div>
+            @if($tierPriceLevel > 1)
+                <div class="price-was">Rp {{ number_format($level1Price, 0, ',', '.') }}</div>
+                <div class="price-now">
+                    Rp {{ number_format($tierPrice, 0, ',', '.') }}
+                </div>
+            @else
+                <div class="price-now">
+                    Rp {{ number_format($tierPrice, 0, ',', '.') }}
+                </div>
             @endif
-            <div class="price-now">
-                Rp {{ number_format($retailPrice, 0, ',', '.') }}
-                @if($basePrice > $retailPrice && $basePrice > 0)
-                    <span class="discount-pill-badge">HEMAT {{ round((($basePrice - $retailPrice) / $basePrice) * 100) }}%</span>
-                @endif
-            </div>
-        </div>
-
-        {{-- VARIANT SELECTIONS --}}
-        <div class="attribute-section">
-            <div class="attribute-label">Pilihan Varian Part</div>
-            <div class="chip-group">
-                <span class="selector-chip active">Depan + Belakang (Set)</span>
-                <span class="selector-chip">Depan Saja</span>
-            </div>
-        </div>
-
-        <div class="attribute-section">
-            <div class="attribute-label">Kombinasi Motor</div>
-            <div class="chip-group">
-                <span class="selector-chip active">Vario 125 (2012 - 2019)</span>
-                <span class="selector-chip">Vario 150</span>
-            </div>
         </div>
 
         {{-- DB STOCK FEEDBACK --}}
@@ -396,30 +400,34 @@
         {{-- ECO-DATABASE ACTION FORM (CRUD: CREATE FOR CART ITEMS) --}}
         <form action="{{ route('cart.index') }}" method="GET" class="checkout-form-action-block">
             @csrf
-            {{-- Mengirim ID produk tersembunyi untuk backend CRUD proses nanti --}}
             <input type="hidden" name="product_id" value="{{ $product->id ?? 1 }}">
             
             <div class="quantity-row-panel">
                 <div class="attribute-label" style="margin-bottom: 0; width: 80px;">Kuantitas</div>
-                
                 <div class="stepper-box">
                     <button type="button" class="stepper-action-btn" onclick="decrementQty()">−</button>
                     <input type="number" id="purchaseQty" name="qty" class="stepper-number-input" value="1" min="1" max="{{ $product->current_stock ?? 24 }}">
                     <button type="button" class="stepper-action-btn" onclick="incrementQty()">+</button>
                 </div>
-                
                 <span style="font-size: 0.78rem; color: var(--gray-mid); font-family: var(--font-mono);">Max pembelian: {{ $product->current_stock ?? 24 }} unit</span>
             </div>
 
             <div class="action-button-group" style="margin-top: 0.5rem;">
-                <button type="submit" class="btn btn-primary btn-lg submit-cart-btn">
+                <button type="button" class="btn btn-primary btn-lg submit-cart-btn" onclick="addToCartFromDetail({{ $product->id }})">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 16px; height: 16px;"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                     Tambah ke Keranjang
                 </button>
-                
-                <button type="button" class="favorite-toggle-btn" title="Simpan ke Wishlist" onclick="window.location.href='{{ route('wishlist.index') }}'">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+
+                <button type="button" class="btn btn-outline btn-lg" style="flex: 0 0 auto; white-space: nowrap;" onclick="buyNow({{ $product->id }})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 16px; height: 16px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Beli Sekarang
                 </button>
+
+                @auth
+                    <button type="button" class="favorite-toggle-btn" title="Simpan ke Wishlist" onclick="toggleWishlist({{ $product->id }})">
+                        <svg viewBox="0 0 24 24" fill="{{ $isInWishlist ?? false ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; color: {{ $isInWishlist ?? false ? 'var(--red)' : 'inherit' }};"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </button>
+                @endauth
             </div>
         </form>
 
@@ -427,25 +435,55 @@
         <table class="technical-specs-table">
             <tr>
                 <td>Manufaktur</td>
-                <td>{{ $product->manufacturer ?? 'Brembo Italy Performance' }}</td>
+                <td>{{ $product->manufacturer ?? '-' }}</td>
             </tr>
             <tr>
                 <td>Material Pad</td>
-                <td>{{ $product->material ?? 'Semi-metallic high friction compound' }}</td>
+                <td>{{ $product->material ?? '-' }}</td>
             </tr>
             <tr>
                 <td>Rekomendasi Batas Pakai</td>
-                <td>{{ $product->lifetime ?? '± 30.000 km (Kondisi Jalan Normal)' }}</td>
+                <td>{{ $product->lifetime ?? '-' }}</td>
             </tr>
             <tr>
                 <td>Berat Total</td>
-                <td>{{ $product->weight ?? '340 Gram' }}</td>
+                <td>{{ $product->weight ?? '-' }}</td>
             </tr>
         </table>
+    </div>
+</div> {{-- Penutup detail-grid-layout --}}
 
+{{-- RECOMMENDATIONS - FULL WIDTH --}}
+@if(isset($recommendations) && $recommendations->count() > 0)
+<div style="margin-top: 3rem;">
+    <h2 class="sec-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Produk Serupa Lainnya</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
+        @foreach($recommendations as $rec)
+        <a href="{{ route('produk.show', $rec->id) }}" style="text-decoration: none; color: inherit; background: #111110; border: 1px solid rgba(242, 239, 230, 0.05); border-radius: 4px; padding: 1rem; display: flex; flex-direction: column; transition: all 0.2s; height: 100%;">
+            <div style="aspect-ratio: 4/3; background: #151513; border-radius: 2px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; overflow: hidden; padding: 0.25rem;">
+                @if($rec->images->first())
+                    <img src="{{ asset('storage/' . $rec->images->first()->image_path) }}" alt="{{ $rec->name }}" style="width: 100%; height: 100%; object-fit: contain;">
+                @else
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--gray-mid)" stroke-width="1" opacity="0.3"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                @endif
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--orange); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.25rem;">{{ $rec->brand }}</div>
+            <div style="font-weight: 500; font-size: 0.85rem; color: var(--off-white); line-height: 1.3; margin-bottom: 0.5rem; flex: 1;">{{ Str::limit($rec->name, 40) }}</div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: auto;">
+                <div style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 600; color: var(--off-white);">
+                    Rp {{ number_format($rec->prices->first()?->price ?? $rec->base_price ?? 0, 0, ',', '.') }}
+                </div>
+                <button type="button" onclick="event.preventDefault(); addToCartFromDetail({{ $rec->id }})" style="width: 32px; height: 32px; background: rgba(232, 82, 26, 0.1); border: 1px solid rgba(232, 82, 26, 0.2); border-radius: 3px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; color: var(--orange);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                </button>
+            </div>
+        </a>
+        @endforeach
     </div>
 </div>
-</div>
+@endif
+
+</div> {{-- Penutup page-wrapper --}}
 @endsection
 
 @push('scripts')
@@ -465,6 +503,80 @@
         if (current > 1) {
             qtyInput.value = current - 1;
         }
+    }
+
+    function addToCartFromDetail(productId) {
+        const qty = parseInt(qtyInput.value) || 1;
+
+        fetch(`/customer/cart/add/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ qty: qty }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('success', data.message || 'Produk masuk keranjang');
+            } else {
+                showToast('error', data.message || 'Gagal menambahkan produk');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('error', 'Terjadi kesalahan jaringan.');
+        });
+    }
+
+    function buyNow(productId) {
+        const qty = parseInt(qtyInput.value) || 1;
+
+        fetch(`/buy-now/${productId}?qty=${qty}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                showToast('error', data.message || 'Gagal memulai pembelian langsung.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('error', 'Terjadi kesalahan jaringan.');
+        });
+    }
+
+    function toggleWishlist(productId) {
+        fetch(`/customer/wishlist/${productId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: '',
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showToast('error', data.message || 'Gagal memperbarui wishlist.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('error', 'Terjadi kegagalan jaringan.');
+        });
     }
 </script>
 @endpush

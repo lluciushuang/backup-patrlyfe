@@ -115,46 +115,38 @@
     color: white;
 }
 
-.price-inputs {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
+.star-ico.empty {
+    color: rgba(242, 239, 230, 0.15);
+}
+
+.price-range-container {
     margin-top: 0.75rem;
 }
 
-.price-input {
-    flex: 1;
-    padding: 0.45rem 0.7rem;
-    background: var(--surface-2);
-    border: 1px solid rgba(242, 239, 230, 0.1);
+.price-range-container input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: rgba(242, 239, 230, 0.15);
     border-radius: 2px;
-    color: var(--off-white);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
     outline: none;
-    width: 0;
 }
 
-.rating-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0;
+.price-range-container input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--orange);
+    border-radius: 50%;
     cursor: pointer;
 }
 
-.stars-mini {
+.price-range-container .range-values {
     display: flex;
-    gap: 1px;
-}
-
-.star-ico {
-    color: var(--orange);
-    font-size: 0.8rem;
-}
-
-.star-ico.empty {
-    color: rgba(242, 239, 230, 0.15);
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--gray-mid);
 }
 
 .shop-topbar {
@@ -218,6 +210,7 @@
     flex-direction: column;
     border-radius: 4px;
     border: 1px solid rgba(242, 239, 230, 0.03);
+    height: 100%;
 }
 
 .prod-card:hover {
@@ -225,12 +218,23 @@
 }
 
 .prod-img {
-    aspect-ratio: 1;
+    aspect-ratio: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 250px;
     background: #1A1A16;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    padding: 0.5rem;
+    flex-shrink: 0;
+}
+
+.prod-img img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
 }
 
 .prod-img-ph {
@@ -309,34 +313,6 @@
     color: var(--off-white);
 }
 
-.pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    margin-top: 3rem;
-}
-
-.page-btn {
-    width: 36px;
-    height: 36px;
-    border: 1px solid rgba(242, 239, 230, 0.1);
-    background: transparent;
-    color: var(--gray-light);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.page-btn.active {
-    background: var(--orange);
-    border-color: var(--orange);
-    color: white;
-}
-
 /* Tambahkan atau pastikan baris media query ini ada di file catalog.blade.php kamu */
 @media (max-width: 1024px) {
     .shop-layout {
@@ -374,30 +350,94 @@
         <div class="sidebar-card">
             <div class="sidebar-title">Kategori</div>
             <ul class="filter-list">
-                <li class="filter-item active">Semua Produk <span class="count">{{ \App\Models\Product::count() }}</span></li>
-                @foreach(\App\Models\Category::withCount('products')->get() as $cat)
-                <li class="filter-item">
-                    {{ $cat->name }} <span class="count">{{ number_format($cat->products_count) }}</span>
+                <li>
+                    <a href="{{ route('produk.index') }}" class="filter-item {{ !($selectedCategory ?? false) ? 'active' : '' }}">
+                        Semua Produk <span class="count">{{ number_format(\App\Models\Product::count()) }}</span>
+                    </a>
+                </li>
+                @foreach($categories as $cat)
+                <li>
+                    <a href="{{ route('produk.index', array_merge(request()->except(['category', 'page']), ['category' => $cat->id])) }}" class="filter-item {{ ($selectedCategory ?? false) == $cat->id ? 'active' : '' }}">
+                        {{ $cat->name }} <span class="count">{{ number_format($cat->products_count) }}</span>
+                    </a>
                 </li>
                 @endforeach
             </ul>
         </div>
         <div class="sidebar-card">
-            <div class="sidebar-title">Merek Motor</div>
-            @foreach([['Honda', true], ['Yamaha', true], ['Suzuki', false], ['Kawasaki', false]] as [$brand, $checked])
-            <label class="filter-check {{ $checked ? 'checked' : '' }}">
-                <input type="checkbox" {{ $checked ? 'checked' : '' }}>
-                <span class="check-box"></span> {{ $brand }}
-            </label>
-            @endforeach
+            <div class="sidebar-title">Rentang Harga</div>
+            <div class="price-range-container">
+                <div class="range-values">
+                    <span>Rp <span id="minPriceLabel">{{ number_format($minPrice ?? $priceStats->min_price ?? 0, 0, ',', '.') }}</span></span>
+                    <span>Rp <span id="maxPriceLabel">{{ number_format($maxPrice ?? $priceStats->max_price ?? 1000000, 0, ',', '.') }}</span></span>
+                </div>
+                <div class="double-range-wrapper" style="position: relative; height: 30px; margin: 1rem 0;">
+                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: rgba(242,239,230,0.15); border-radius: 2px; transform: translateY(-50%);"></div>
+                    <input type="range" id="priceRangeMin" min="{{ $priceStats->min_price ?? 0 }}" max="{{ $priceStats->max_price ?? 1000000 }}" value="{{ $minPrice ?? $priceStats->min_price ?? 0 }}" step="1000" style="position: absolute; width: 100%; height: 30px; background: transparent; pointer-events: none; -webkit-appearance: none; margin: 0;">
+                    <input type="range" id="priceRangeMax" min="{{ $priceStats->min_price ?? 0 }}" max="{{ $priceStats->max_price ?? 1000000 }}" value="{{ $maxPrice ?? $priceStats->max_price ?? 1000000 }}" step="1000" style="position: absolute; width: 100%; height: 30px; background: transparent; pointer-events: none; -webkit-appearance: none; margin: 0;">
+                </div>
+                <style>
+                    .double-range-wrapper input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--orange); border-radius: 50%; cursor: pointer; pointer-events: auto; }
+                    .double-range-wrapper input[type=range] { background: none; }
+                </style>
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <button type="button" onclick="applyPriceFilter()" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center;">Terapkan</button>
+                <a href="{{ route('produk.index') }}" class="btn btn-outline btn-sm" style="text-align: center; padding: 0.45rem 0.8rem; font-size: 0.75rem;">Reset</a>
+            </div>
+            <form id="priceFilterForm" action="{{ route('produk.index') }}" method="GET" style="display: none;">
+                @if($search ?? false)
+                <input type="hidden" name="search" value="{{ $search }}">
+                @endif
+                @if($selectedCategory ?? false)
+                <input type="hidden" name="category" value="{{ $selectedCategory }}">
+                @endif
+                <input type="hidden" name="min_price" id="hiddenMinPrice" value="{{ $minPrice ?? $priceStats->min_price ?? 0 }}">
+                <input type="hidden" name="max_price" id="hiddenMaxPrice" value="{{ $maxPrice ?? $priceStats->max_price ?? 1000000 }}">
+            </form>
+            <script>
+                const sliderMin = document.getElementById('priceRangeMin');
+                const sliderMax = document.getElementById('priceRangeMax');
+                const minLabel = document.getElementById('minPriceLabel');
+                const maxLabel = document.getElementById('maxPriceLabel');
+                const minInput = document.getElementById('hiddenMinPrice');
+                const maxInput = document.getElementById('hiddenMaxPrice');
+                
+                function updateLabels() {
+                    if (minLabel && maxLabel) {
+                        minLabel.textContent = new Intl.NumberFormat('id-ID').format(sliderMin.value);
+                        maxLabel.textContent = new Intl.NumberFormat('id-ID').format(sliderMax.value);
+                    }
+                    if (minInput && maxInput) {
+                        minInput.value = sliderMin.value;
+                        maxInput.value = sliderMax.value;
+                    }
+                }
+                
+                if (sliderMin && sliderMax) {
+                    sliderMin.addEventListener('input', function() {
+                        if (parseInt(sliderMin.value) > parseInt(sliderMax.value)) {
+                            sliderMin.value = sliderMax.value;
+                        }
+                        updateLabels();
+                    });
+                    sliderMax.addEventListener('input', function() {
+                        if (parseInt(sliderMax.value) < parseInt(sliderMin.value)) {
+                            sliderMax.value = sliderMin.value;
+                        }
+                        updateLabels();
+                    });
+                }
+                
+                function applyPriceFilter() {
+                    document.getElementById('priceFilterForm').submit();
+                }
+            </script>
         </div>
     </aside>
 
     <main class="shop-main">
         <div class="shop-topbar">
-            @php
-                $products = \App\Models\Product::with(['prices', 'images'])->paginate(9);
-            @endphp
             <div style="font-size:0.82rem; color:var(--gray-mid);">Menampilkan <strong>{{ $products->firstItem() ?? 0 }}–{{ $products->lastItem() ?? 0 }}</strong> dari
                 <strong>{{ $products->total() }}</strong> produk</div>
             <select class="sort-select">
@@ -411,7 +451,7 @@
             <a href="{{ route('produk.show', $p->id) }}" class="prod-card">
                 <div class="prod-img">
                     @if($p->images->count() > 0)
-                        <img src="{{ asset('storage/' . $p->images->first()->image_path) }}" alt="{{ $p->name }}" style="width: 100%; height: 100%; object-fit: contain;">
+                        <img src="{{ asset('storage/' . $p->images->first()->image_path) }}" alt="{{ $p->name }}">
                     @else
                         <svg width="80" height="80" viewBox="0 0 100 100" class="prod-img-ph"
                             xmlns="http://www.w3.org/2000/svg">
@@ -425,25 +465,28 @@
                     <div class="prod-name">{{ $p->name }}</div>
                     <div class="prod-spec">Stok: {{ $p->current_stock }} {{ $p->unit }}</div>
                     <div class="prod-rating"><span class="s">★</span> 4.8</div>
-                    <div class="prod-footer-price">
-                        <div>
-                            @php $price = $p->prices->where('price_level', 1)->first(); @endphp
-                            @if($p->base_price > ($price->price ?? 0))
-                                <div class="prod-price-old">Rp {{ number_format($p->base_price, 0, ',', '.') }}</div>
-                            @endif
-                            <div class="prod-price">Rp {{ number_format($price->price ?? 0, 0, ',', '.') }}</div>
-                        </div>
-                        <button class="prod-add-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5">
-                                <path d="M12 5v14M5 12h14" />
-                            </svg></button>
-                    </div>
-                </div>
-            </a>
-            @endforeach
+<div class="prod-footer-price">
+                      <div>
+                          @php 
+                              $tierPrice = $p->prices->where('price_level', $tierPriceLevel)->first()?->price ?? $p->base_price ?? 0;
+                              $level1Price = $p->prices->where('price_level', 1)->first()?->price ?? $p->base_price ?? 0;
+                          @endphp
+                          @if($tierPriceLevel > 1)
+                               <div class="prod-price-old">Rp {{ number_format($level1Price, 0, ',', '.') }}</div>
+                           @endif
+                           <div class="prod-price">Rp {{ number_format($tierPrice, 0, ',', '.') }}</div>
+                      </div>
+                      <button class="prod-add-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                  stroke-width="2.5">
+                                  <path d="M12 5v14M5 12h14" />
+                              </svg></button>
+                      </div>
+                 </div>
+             </a>
+             @endforeach
         </div>
         <div class="pagination">
-            {{ $products->links('pagination::bootstrap-4') }}
+            {{ $products->links('pagination::default') }}
         </div>
     </main>
 </div>

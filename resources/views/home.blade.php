@@ -28,7 +28,7 @@
             </div>
             <div class="hero-stats">
                 <div>
-                    <div class="hero-stat-num">50K+</div>
+                    <div class="hero-stat-num">{{ number_format(\App\Models\Product::count()) }}+</div>
                     <div class="hero-stat-label">Produk Tersedia</div>
                 </div>
                 <div>
@@ -115,13 +115,9 @@
             <a href="{{ route('kategori.index') }}" class="btn btn-outline btn-sm">Lihat Semua →</a>
         </div>
 
-        <div class="kategori-grid">
-            @php
-                $kategoriData = \App\Models\Category::withCount('products')->take(4)->get();
-            @endphp
-
-            @foreach($kategoriData as $kat)
-            <a href="{{ route('kategori.show', str()->slug($kat->name)) }}" class="kategori-card">
+<div class="kategori-grid">
+             @foreach($categories as $kat)
+             <a href="{{ route('kategori.show', str()->slug($kat->name)) }}" class="kategori-card">
                 <div class="kategori-icon-wrap">
                     @if(str_contains(strtolower($kat->name), 'mesin'))
                     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -178,12 +174,9 @@
             <a href="{{ route('produk.index') }}" class="btn btn-outline btn-sm">Lihat Semua →</a>
         </div>
 
-        <div class="produk-grid">
-            @php
-                $featuredProducts = \App\Models\Product::with(['prices', 'images'])->where('current_stock', '>', 0)->inRandomOrder()->take(3)->get();
-            @endphp
-            @foreach($featuredProducts as $product)
-            <a href="{{ route('produk.show', $product->id) }}" class="prod-card">
+<div class="produk-grid">
+             @foreach($featuredProducts as $product)
+             <a href="{{ route('produk.show', $product->id) }}" class="prod-card">
                 <div class="produk-brand">{{ $product->brand }}</div>
                 <div class="produk-img-wrap">
                     @if($loop->first)

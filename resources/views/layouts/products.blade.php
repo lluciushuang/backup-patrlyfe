@@ -12,7 +12,7 @@
 @section('content')
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
         <h2>Manajemen Katalog Produk</h2>
-        <button class="btn" onclick="alert('Pop Up Modal Tambah Produk (Hardcoded)')">+ Tambah Produk</button>
+        <button class="btn" onclick="adminToast.fire({ icon: 'info', title: 'Pop Up Modal Tambah Produk (Hardcoded)' })">+ Tambah Produk</button>
     </div>
 
     <table class="table">

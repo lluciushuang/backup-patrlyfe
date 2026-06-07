@@ -265,6 +265,11 @@
         border-color: rgba(242, 239, 230, 0.03);
         cursor: not-allowed;
     }
+    textarea.form-control {
+        padding: 0.75rem 1rem;
+        padding-left: 1rem;
+        resize: vertical;
+    }
     
     /* Small Badge Inside Input Area */
     .input-inner-badge {
@@ -279,114 +284,6 @@
     .input-inner-badge.success { background: rgba(46,204,113,0.15); color: var(--green); }
     .input-inner-badge.warning { background: rgba(232,82,26,0.15); color: var(--orange); }
 
-    /* ── TOGGLE LIST (PREFERENSI) ── */
-    .notif-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-    .notif-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.85rem 1rem;
-        background: #151513;
-        border: 1px solid rgba(242, 239, 230, 0.03);
-        border-radius: 3px;
-    }
-    .notif-info {
-        display: flex;
-        flex-direction: column;
-        gap: 0.15rem;
-    }
-    .notif-title {
-        font-size: 0.88rem;
-        font-weight: 500;
-        color: var(--off-white);
-    }
-    .notif-sub {
-        font-size: 0.78rem;
-        color: var(--gray-mid);
-    }
-
-    /* Elegant Custom Cyber Toggle Switch */
-    .cyber-switch {
-        position: relative;
-        display: inline-block;
-        width: 44px;
-        height: 22px;
-        flex-shrink: 0;
-    }
-    .cyber-switch input { opacity: 0; width: 0; height: 0; }
-    .switch-slider {
-        position: absolute; cursor: pointer; inset: 0;
-        background-color: #262622;
-        border: 1px solid rgba(242,239,230,0.1);
-        border-radius: 34px;
-        transition: .25s ease;
-    }
-    .switch-slider::before {
-        position: absolute; content: "";
-        height: 14px; width: 14px; left: 3px; bottom: 3px;
-        background-color: var(--gray-light);
-        border-radius: 50%;
-        transition: .25s ease;
-    }
-    .cyber-switch input:checked + .switch-slider {
-        background-color: rgba(232, 82, 26, 0.2);
-        border-color: var(--orange);
-    }
-    .cyber-switch input:checked + .switch-slider::before {
-        transform: translateX(22px);
-        background-color: var(--orange);
-        box-shadow: 0 0 8px var(--orange);
-    }
-
-    /* ── INDUSTRIAL MAP ELEMENT (ALAMAT) ── */
-    .map-mockup-wrapper {
-        border: 1px solid rgba(242, 239, 230, 0.06);
-        background: #141412;
-        border-radius: 3px;
-        overflow: hidden;
-        margin-top: 0.5rem;
-    }
-    .map-canvas-area {
-        height: 135px;
-        background-color: #0c0c0b;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-    }
-    /* Vector Map Line Grid Graphics Overlay */
-    .map-grid-blueprint {
-        position: absolute; inset: 0; opacity: 0.08;
-        background-image: 
-            linear-gradient(rgba(242,239,230,0.5) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(242,239,230,0.5) 1px, transparent 1px);
-        background-size: 20px 20px;
-    }
-    .map-road-mock {
-        position: absolute; width: 150%; height: 10px; background: rgba(242,239,230,0.05); transform: rotate(-25deg);
-    }
-    .map-road-mock.cross {
-        width: 10%; height: 150%; left: 40%; transform: rotate(15deg);
-    }
-    .map-pin-center {
-        position: relative; z-index: 2; color: var(--orange);
-        animation: pulsePin 2s infinite alternate;
-    }
-    @keyframes pulsePin {
-        0% { transform: scale(1); filter: drop-shadow(0 0 2px var(--orange)); }
-        100% { transform: scale(1.15); filter: drop-shadow(0 0 10px var(--orange)); }
-    }
-    .map-address-details {
-        padding: 1.25rem;
-        background: #111110;
-        border-top: 1px solid rgba(242,239,230,0.05);
-    }
-
     /* Action Footer Rows */
     .form-save-row {
         display: flex;
@@ -399,7 +296,13 @@
 @endpush
 
 @section('content')
+@auth
 <div class="page-wrapper"> {{-- Pembungkus Pengaman Tengah Layar --}}
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <a href="{{ route('produk.index') }}" class="btn btn-outline btn-sm" style="background: var(--orange); color: var(--off-white); border: none; font-size: 0.85rem; padding: 0.5rem 1rem;">
+            ← KEMBALI KE PRODUK
+        </a>
+    </div>
     <div class="breadcrumb">
         <a href="{{ route('home') }}">HOME</a> <span>/</span> <a href="#">ACCOUNT</a> <span>/</span> PROFILE
     </div>
@@ -410,29 +313,32 @@
     <aside class="account-sidebar">
         <div class="account-card">
             <div class="profile-avatar-wrap">
-                <div class="profile-avatar">RH</div>
+                <div class="profile-avatar">{{ substr(Auth::user()->name, 0, 1) }}</div>
                 <div class="avatar-verified-badge" title="Verified Account">✓</div>
             </div>
-            <h2 class="profile-meta-name">Rizal Hermawan</h2>
-            <div class="profile-meta-sub">ID: PL-98240-2026</div>
+            <h2 class="profile-meta-name">{{ Auth::user()->name }}</h2>
+            <div class="profile-meta-sub">ID: PL-{{ Auth::user()->id }}-2026</div>
 
             <nav class="account-nav">
                 <a href="#" class="anav-link active">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     Profile Settings
                 </a>
-                <a href="#" class="anav-link">
+                <a href="{{ route('transactions.index') }}" class="anav-link">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                     My Orders
                 </a>
-                <a href="#" class="anav-link">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <a href="{{ route('wishlist.index') }}" class="anav-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.0 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.0 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.0 0 0 0 0-7.78z"/></svg>
                     My Wishlist
                 </a>
-                <a href="#" class="anav-link logout-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    Log Out
-                </a>
+                <form method="POST" action="{{ route('logout') }}" style="margin-top: 1rem; border-top: 1px solid rgba(242, 239, 230, 0.05); padding-top: 1rem; border-radius: 0;">
+                    @csrf
+                    <button type="submit" class="anav-link logout-btn" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Log Out
+                    </button>
+                </form>
             </nav>
         </div>
     </aside>
@@ -443,115 +349,117 @@
             <h1 class="main-section-title">ACCOUNT SETTINGS</h1>
         </div>
 
-        <div class="profile-dashboard-grid">
+<div class="profile-dashboard-grid">
             
             {{-- BLOCK 1: CONTACT INFORMATIONS --}}
             <div class="profile-form-card">
                 <div class="pfc-header">
                     <div class="pfc-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-16V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         Informasi Kontak
                     </div>
-                    <div class="progress-pill-box" title="Kelengkapan data profil kamu">
-                        Profile Complete 95%
-                    </div>
                 </div>
 
-                <div class="form-grid">
-                    <div class="form-group full-span">
-                        <label class="form-label">Nama Lengkap</label>
-                        <div class="input-icon-wrapper">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <input type="text" class="form-control" value="Rizal Hermawan" placeholder="Masukkan nama lengkap">
+                <form method="POST" action="{{ route('profile.update') }}">
+                    @csrf
+                    <div class="form-grid">
+                        <div class="form-group full-span">
+                            <label class="form-label">Nama Lengkap</label>
+                            <div class="input-icon-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <input type="text" name="name" class="form-control" value="{{ Auth::user()->name }}" placeholder="Masukkan nama lengkap" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-span">
+                            <label class="form-label">Nomor Telepon</label>
+                            <div class="input-icon-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                <input type="text" name="phone" class="form-control" value="{{ Auth::user()->phone }}" placeholder="Masukkan nomor HP">
+                                <span class="input-inner-badge success">Verified</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-span">
+                            <label class="form-label">Alamat Email</label>
+                            <div class="input-icon-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                <input type="email" class="form-control" value="{{ Auth::user()->email }}" placeholder="Alamat Email" disabled>
+                                <span class="input-inner-badge success">Primary</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-span">
+                            <label class="form-label">Alamat Lengkap</label>
+                            <div class="input-icon-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <textarea name="address" class="form-control" rows="3" placeholder="Masukkan alamat lengkap">{{ Auth::user()->address }}</textarea>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group full-span">
-                        <label class="form-label">Nomor Telepon</label>
-                        <div class="input-icon-wrapper">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            <input type="text" class="form-control" value="+62 812-3456-7890" placeholder="Masukkan nomor HP">
-                            <span class="input-inner-badge success">Verified</span>
-                        </div>
+                    <div class="form-save-row">
+                        <button type="submit" class="btn btn-primary btn-sm">Simpan Perubahan</button>
                     </div>
-
-                    <div class="form-group full-span">
-                        <label class="form-label">Alamat Email</label>
-                        <div class="input-icon-wrapper">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                            <input type="email" class="form-control" value="rizal.h@email.com" placeholder="Alamat Email" disabled>
-                            <span class="input-inner-badge success">Primary</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-save-row">
-                    <button class="btn btn-primary btn-sm">Simpan Perubahan</button>
-                </div>
+                </form>
             </div>
 
-            {{-- BLOCK 2: SHIPPING ADDRESS ELEMENTS --}}
+            {{-- BLOCK 2: STATISTIK & KEAMANAN AKUN --}}
             <div class="profile-form-card">
                 <div class="pfc-header">
                     <div class="pfc-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        Alamat Pengiriman Utama
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; color: var(--orange);"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        Ringkasan Akun
                     </div>
                 </div>
 
-                <div class="map-mockup-wrapper">
-                    <div class="map-canvas-area">
-                        <div class="map-grid-blueprint"></div>
-                        <div class="map-road-mock"></div>
-                        <div class="map-road-mock cross"></div>
-                        <div class="map-pin-center">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                    <!-- Stat 1: Total Transaksi -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px dashed rgba(242, 239, 230, 0.05);">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 4px; background: rgba(232, 82, 26, 0.1); display: flex; align-items: center; justify-content: center; color: var(--orange);">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.88rem; color: var(--off-white); font-weight: 500;">Total Transaksi</div>
+                                <div style="font-size: 0.72rem; color: var(--gray-mid); font-family: var(--font-mono); margin-top: 0.2rem;">Riwayat belanja Anda</div>
+                            </div>
                         </div>
+                        <div style="font-family: var(--font-display); font-size: 1.4rem; color: var(--off-white);">{{ $transactionCount ?? 0 }}</div>
                     </div>
-                    <div class="map-address-details">
-                        <div style="font-weight: 600; font-size: 0.95rem; color: var(--off-white); margin-bottom: 0.2rem;">Rumah Utama</div>
-                        <p style="font-size: 0.82rem; color: var(--gray-light); line-height: 1.5;">
-                            Jl. Rungkut Industri No. 45, Kecamatan Rungkut, Kota Surabaya, Jawa Timur — 60293
-                        </p>
-                    </div>
-                </div>
 
-                <div class="form-save-row" style="margin-top: 1.8rem;">
-                    <button class="btn btn-outline btn-sm">Ubah Alamat</button>
-                </div>
-            </div>
-
-            {{-- BLOCK 3: NOTIFICATION PREFERENCES (FULL WIDTH) --}}
-            <div class="profile-form-card full-width">
-                <div class="pfc-header">
-                    <div class="pfc-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                        Preferensi Notifikasi Sistem
-                    </div>
-                </div>
-
-                <div class="notif-list">
-                    @foreach([
-                        ['Status Pengiriman Pesanan', 'Kirimkan update live tracking sparepart via email & push notif.', true],
-                        ['Informasi Flash Sale & Promo', 'Dapatkan info diskon part mesin, ban, dan oli up-to-date.', true],
-                        ['Notifikasi Restok Barang', 'Beri tahu saya jika barang di Wishlist sudah ready stock kembali.', false]
-                    ] as [$title, $description, $status])
-                    <div class="notif-row">
-                        <div class="notif-info">
-                            <div class="notif-title">{{ $title }}</div>
-                            <div class="notif-sub">{{ $description }}</div>
+                    <!-- Stat 2: Wishlist -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px dashed rgba(242, 239, 230, 0.05);">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 42px; height: 42px; border-radius: 4px; background: rgba(46, 204, 113, 0.1); display: flex; align-items: center; justify-content: center; color: var(--green);">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.88rem; color: var(--off-white); font-weight: 500;">Produk Wishlist</div>
+                                <div style="font-size: 0.72rem; color: var(--gray-mid); font-family: var(--font-mono); margin-top: 0.2rem;">Item tersimpan</div>
+                            </div>
                         </div>
-                        <label class="cyber-switch">
-                            <input type="checkbox" {{ $status ? 'checked' : '' }}>
-                            <span claqss="switch-slider"></span>
-                        </label>
+                        <div style="font-family: var(--font-display); font-size: 1.4rem; color: var(--off-white);">{{ $wishlistCount ?? 0 }}</div>
                     </div>
-                    @endforeach
+
+                    <!-- Info Keamanan -->
+                    <div style="background: #151513; border: 1px solid rgba(242, 239, 230, 0.05); padding: 1.25rem; border-radius: 4px; margin-top: 0.5rem;">
+                        <div style="font-size: 0.7rem; color: var(--gray-mid); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; font-family: var(--font-mono);">Keamanan Akun</div>
+                        <div style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: var(--green); margin-bottom: 1rem;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <span style="font-weight: 500;">Password terlindungi</span>
+                        </div>
+<a href="{{ route('password.request') }}" style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--orange); text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--orange)'">
+                             Ubah Kata Sandi
+                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                         </a>
+                    </div>
                 </div>
             </div>
 
         </div>
     </main>
 </div>
-</div>
+
+@endauth
 @endsection

@@ -12,7 +12,7 @@
 @section('content')
     <h2>Pusat Komunikasi Pelanggan</h2>
     <div style="background:var(--surface); padding:2rem; border:1px solid var(--border); border-radius:4px; max-width:600px; margin-top:1.5rem;">
-        <form onsubmit="event.preventDefault(); alert('Siaran Notifikasi Berhasil Disemburkan ke Semua Customer!');">
+        <form onsubmit="event.preventDefault(); adminToast.fire({ icon: 'success', title: 'Siaran Notifikasi Berhasil Disemburkan ke Semua Customer!' });">
             <div class="form-group">
                 <label>Judul Broadcast</label>
                 <input type="text" class="form-control" placeholder="Contoh: Promo Ganti Oli Akhir Tahun!" required>

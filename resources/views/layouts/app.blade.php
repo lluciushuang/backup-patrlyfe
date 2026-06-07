@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Partlyfe') — Sparepart Motor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,14 +68,14 @@
             background: transparent; border: none; color: var(--off-white);
             font-family: var(--font-body); font-size: 0.85rem; outline: none;
         }
-        .nav-search input::placeholder { color: var(--gray-mid); }
-        .nav-search-btn {
-            padding: 0.55rem 1rem; background: var(--orange);
-            border: none; color: var(--off-white); cursor: pointer;
-            display: flex; align-items: center;
-        }
-        .nav-search-btn svg { width: 16px; height: 16px; }
-        .nav-spacer { flex: 1; }
+.nav-search input::placeholder { color: var(--gray-mid); }
+         .nav-search-btn {
+             padding: 0.55rem 1rem; background: var(--orange);
+             border: none; color: var(--off-white); cursor: pointer;
+             display: flex; align-items: center;
+         }
+         .nav-search-btn svg { width: 16px; height: 16px; }
+         .nav-spacer { flex: 1; }
         .nav-icons { display: flex; align-items: center; gap: 0.25rem; }
         .nav-icon-btn {
             width: 40px; height: 40px; border-radius: 3px;
@@ -299,50 +300,41 @@
 
     <nav class="nav">
         <a href="{{ route('home') }}" class="nav-logo">PART<span>L</span>YFE</a>
-        <div class="nav-search">
-            <input type="text" placeholder="Cari sparepart, merek, tipe motor...">
-            <button class="nav-search-btn">
+        <div class="nav-search" style="position: relative;">
+            <input type="text" id="searchInput" placeholder="Cari sparepart, merek, tipe motor..." autocomplete="off">
+            <button class="nav-search-btn" id="searchBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             </button>
+            <div id="searchResults" class="search-results"></div>
         </div>
         <div class="nav-spacer"></div>
         <div class="nav-icons">
             <a href="{{ route('produk.index') }}" class="nav-icon-btn" title="Katalog Produk" style="font-size: 0.8rem; font-family: var(--font-mono); font-weight:bold; color:var(--orange); padding: 0 0.25rem;">SHOP</a>
             
+        @auth
+            
+            @include('components.notif-dropdown')
+
             <a href="{{ route('wishlist.index') }}" class="nav-icon-btn" title="Wishlist">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                <span class="nav-badge">3</span>
+                @if($wishlistCount ?? 0 > 0)
+                <span class="nav-badge">{{ ($wishlistCount ?? 0) > 9 ? '9+' : ($wishlistCount ?? 0) }}</span>
+                @endif
             </a>
-            
-            <div class="nav-icon-wrapper">
-                <a href="#" class="nav-icon-btn" title="Notifikasi" id="notifTrigger">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-                    <span class="nav-badge" id="globalNotifBadge">3</span>
-                </a>
-                <div class="notif-dropdown" id="notifDropdown">
-                    <div class="notif-drop-header">
-                        <span>NOTIFIKASI</span>
-                        <span id="clearAllNotif" style="font-size: 0.65rem; color: var(--orange); cursor: pointer;">MARK ALL AS READ</span>
-                    </div>
-                    <div class="notif-drop-list">
-                        <div class="notif-drop-item unread">
-                            <div class="notif-drop-icon success"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-                            <div class="notif-drop-body">
-                                <div class="notif-drop-title">Pesanan <strong>#PL-98240</strong> berhasil dikirim.</div>
-                                <div class="notif-drop-time">10 Menit yang lalu</div>
-                            </div>
-                            <div class="unread-dot"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
+
             <a href="{{ route('cart.index') }}" class="nav-icon-btn" title="Keranjang">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
-                <span class="nav-badge">2</span>
+                @if($cartCount ?? 0 > 0)
+                <span class="nav-badge">{{ ($cartCount ?? 0) > 9 ? '9+' : ($cartCount ?? 0) }}</span>
+                @endif
             </a>
-            
-            <a href="{{ route('akun') }}" class="nav-avatar" title="Akun Saya">RH</a>
+
+            <a href="{{ route('profile') }}" class="nav-avatar" title="Akun Saya">{{ substr(Auth::user()->name, 0, 1) }}</a>
+            @else
+            <a href="{{ route('login') }}" class="nav-icon-btn" title="Masuk/Daftar" style="font-size: 0.85rem;">
+                &#128100;
+            </a>
+            @endauth
         </div>
     </nav>
 
@@ -353,49 +345,143 @@
         &copy; {{ date('Y') }} PARTLYFE — Sparepart Motor Terpercaya Indonesia
     </footer>
 
-    @stack('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const notifTrigger = document.getElementById('notifTrigger');
-            const notifDropdown = document.getElementById('notifDropdown');
-            const globalBadge = document.getElementById('globalNotifBadge');
-            const dropItems = document.querySelectorAll('.notif-drop-item');
-            const clearAll = document.getElementById('clearAllNotif');
+    (function() {
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const searchBtn = document.getElementById('searchBtn');
+        let searchTimeout;
 
-            notifTrigger.addEventListener('click', function(e) {
-                e.preventDefault();
-                notifDropdown.classList.toggle('show');
-            });
+        function performSearch() {
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
+                searchResults.classList.remove('show');
+                searchResults.innerHTML = '';
+                return;
+            }
 
-            document.addEventListener('click', function(e) {
-                if (!notifTrigger.contains(e.target) && !notifDropdown.contains(e.target)) {
-                    notifDropdown.classList.remove('show');
-                }
-            });
-
-            dropItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    if (this.classList.contains('unread')) {
-                        this.classList.remove('unread');
-                        const dot = this.querySelector('.unread-dot');
-                        if (dot) dot.remove();
-                        let currentCount = parseInt(globalBadge.textContent);
-                        if (currentCount > 1) { globalBadge.textContent = currentCount - 1; } else { globalBadge.remove(); }
+            fetch('{{ route('api.search') }}?q=' + encodeURIComponent(query))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        searchResults.innerHTML = '<div class="search-no-results">Tidak ada produk ditemukan</div>';
+                    } else {
+                        searchResults.innerHTML = data.map(product => `
+                            <a href="${product.slug}" class="search-item">
+                                <div class="search-item-img">
+                                    ${product.image ? `<img src="${product.image}" alt="${product.name}">` : `<svg width="24" height="24" viewBox="0 0 100 100" style="opacity:0.3"><rect x="15" y="15" width="70" height="70" rx="4" fill="none" stroke="#F2EFE6" stroke-width="1.5"/></svg>`}
+                                </div>
+                                <div class="search-item-info">
+                                    <div class="search-item-name">${product.name}</div>
+                                    <div class="search-item-brand">${product.brand}</div>
+                                </div>
+                                <div class="search-item-price">Rp ${new Intl.NumberFormat('id-ID').format(product.price)}</div>
+                            </a>
+                        `).join('');
                     }
+                    searchResults.classList.add('show');
+                })
+                .catch(() => {
+                    searchResults.innerHTML = '<div class="search-no-results">Error loading results</div>';
+                    searchResults.classList.add('show');
                 });
-            });
+        }
 
-            if (clearAll) {
-                clearAll.addEventListener('click', function() {
-                    dropItems.forEach(item => {
-                        item.classList.remove('unread');
-                        const dot = item.querySelector('.unread-dot');
-                        if (dot) dot.remove();
-                    });
-                    if (globalBadge) globalBadge.remove();
-                });
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(performSearch, 300);
+        });
+
+        searchBtn.addEventListener('click', function() {
+            window.location.href = '{{ route('produk.index') }}' + (searchInput.value ? '?search=' + encodeURIComponent(searchInput.value) : '');
+        });
+
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                window.location.href = '{{ route('produk.index') }}' + (searchInput.value ? '?search=' + encodeURIComponent(searchInput.value) : '');
             }
         });
+
+        document.addEventListener('click', function(e) {
+            if (!searchResults.contains(e.target) && e.target !== searchInput) {
+                searchResults.classList.remove('show');
+            }
+        });
+
+        searchInput.addEventListener('focus', function() {
+            if (searchInput.value.length >= 2) {
+                searchResults.classList.add('show');
+            }
+        });
+    })();
     </script>
+
+@stack('scripts')
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#151513',
+            color: '#fff',
+            iconColor: '#E8521A'
+        });
+
+        function showToast(icon, title) {
+            toast.fire({ icon, title });
+        }
+    </script>
+
+    @include('components.ai-chat')
+    
+    @auth
+    
+    <script>
+    (function() {
+        const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const dropdown = document.getElementById('notifDropdown');
+
+        function toggleDropdown(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!dropdown) return;
+            dropdown.classList.toggle('show');
+        }
+
+        const notifBtn = document.querySelector('.nav-icon-wrapper > .nav-icon-btn');
+        if (notifBtn) notifBtn.addEventListener('click', toggleDropdown);
+
+        function markAsRead(id) {
+            fetch(`/notifikasi/${id}/read`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+            }).then(() => location.reload());
+        }
+
+        function refreshNotifications() {
+            fetch('/notifikasi/unread', {
+                headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.unread_count > 0) return;
+                if (dropdown) dropdown.classList.remove('show');
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        setInterval(refreshNotifications, 30000);
+    })();
+    </script>
+    @endauth
 </body>
 </html>
