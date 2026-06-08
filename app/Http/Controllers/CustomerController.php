@@ -825,7 +825,24 @@ class CustomerController extends Controller
         }
 
         try {
-            $systemPrompt = "Kamu adalah seorang asisten mekanik virtual yang pintar, ramah, dan gaul dari PartLyfe. Jawablah pertanyaan pelanggan dengan singkat, padat, dan berikan solusi seputar otomotif roda dua atau sparepart. Gunakan bahasa Indonesia yang santai tapi profesional, dan kamu hanya boleh menjawab seputar otomotive sepeda motor saja selain itu biliang maaf saya tidak bisa menjangkau pertanyaan di luar topik saya, adakah hall lainn yang bisa saya bantu. Pertanyaan pelanggan: ";
+            $availableProducts = Product::where('current_stock', '>', 0)->get(['id', 'name', 'brand']);
+            
+            $catalogContext = "";
+            foreach ($availableProducts as $product) {
+                $catalogContext .= "- Nama Barang: {$product->name} | Brand: {$product->brand} | Link Order: " . route('produk.show', $product->id) . "\n";
+            }
+
+            $systemPrompt = "Kamu adalah seorang asisten mekanik virtual yang pintar, ramah, akrab, dan gaul dari toko Sinar Jaya Motor (aplikasi PartLyfe).
+
+Aturan ketat yang WAJIB kamu ikuti:
+1. Jika pelanggan mengeluh motornya rusak atau bermasalah (misal: mogok, tidak bisa distarter, brebet, oli bocor, bunyi kasar), kamu WAJIB memberikan DIAGNOSA LOGIS terlebih dahulu. Jelaskan kemungkinan kerusakannya (misal: cek kondisi aki, busi, dinamo starter, atau pengapian).
+2. JANGAN PERNAH merekomendasikan sparepart yang tidak relevan dengan keluhan mereka (misal: motor mati tidak bisa distarter tapi kamu merekomendasikan lampu atau shockbreaker). Rekomendasi harus tepat sasaran!
+3. Berikut adalah daftar katalog sparepart asli yang SAAT INI TERSEDIA (Ready Stock) di Sinar Jaya Motor:\n" . $catalogContext . "\n
+4. Berdasarkan hasil diagnosamu, cari apakah ada barang yang cocok dari daftar ready stock di atas. Jika ADA, sebutkan nama produknya dan WAJIB sertakan Link Order aslinya secara utuh agar pelanggan bisa langsung klik untuk membeli. Jika barang tidak ada di daftar, katakan bahwa stok barang tersebut sedang habis dan sarankan alternatif lain.
+5. Gunakan bahasa Indonesia yang santai, gaul, akrab (gunakan sapaan seperti 'Bos' atau 'Bro') namun tetap profesional layaknya mekanik berpengalaman.
+6. Kamu HANYA boleh menjawab pertanyaan seputar otomotif roda dua/sepeda motor saja. Jika ditanya hal lain di luar topik motor, tolak dengan sopan dan katakan: 'Maaf Bos, mekanik PartLyfe cuma paham seputar dunia motor aja nih. Ada kendala motor lain yang bisa ane bantu?'
+
+Pertanyaan pelanggan: ";
 
             $response = Http::withoutVerifying()->withHeaders([
                 'Content-Type' => 'application/json',
@@ -849,7 +866,7 @@ class CustomerController extends Controller
             }
 
             $aiReply = $data['candidates'][0]['content']['parts'][0]['text'] ?? "Waduh, mekanik AI lagi bengong nih.";
-            $aiReplyHtml = preg_replace('/\*\*(.*?)\*\//', '<strong>$1</strong>', $aiReply);
+            $aiReplyHtml = preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', $aiReply);
 
             return response()->json([
                 'status' => 'success',
@@ -861,6 +878,42 @@ class CustomerController extends Controller
                 'status' => 'error',
                 'reply' => 'ERROR SISTEM: ' . $e->getMessage()
             ]);
+        }
+    }
+
+
+    public function receiveSyncData(Request $request)
+    {
+        // 1. Validasi Token Keamanan
+       $token = $request->header('X-Sync-Token');
+        if ($token !== 'PartLyfeSyncSecure999') { 
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized Token!'], 401);
+        }
+
+        $table = $request->input('table');
+        $data = $request->input('data');
+
+        if (!$table || !is_array($data)) {
+            return response()->json(['status' => 'error', 'message' => 'Data tidak valid.'], 400);
+        }
+
+        // 2. Eksekusi Upsert (Update jika ada, Create jika belum ada)
+        DB::beginTransaction();
+        try {
+            foreach ($data as $row) {
+                // Hapus kolom is_synced sebelum disimpan ke database cloud
+                unset($row['is_synced']);
+                
+                DB::table($table)->updateOrInsert(
+                    ['id' => $row['id']], // Kunci patokan (primary key)
+                    $row
+                );
+            }
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => "Berhasil sinkronisasi tabel {$table}"]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
 }
