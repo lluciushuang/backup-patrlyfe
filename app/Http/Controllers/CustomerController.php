@@ -353,10 +353,18 @@ class CustomerController extends Controller
 
         $checkoutItems = [];
         $subtotal = 0;
+        $tierPriceLevel = 1;
+        $activeTier = Auth::user()->activeTier;
+        if ($activeTier) {
+            $tierPriceLevel = $activeTier->price_level;
+        }
 
         if ($productId) {
             $product = Product::with(['prices', 'images'])->findOrFail($productId);
-            $price = $product->prices->where('price_level', 1)->first()->price ?? 0;
+            $price = $product->prices->where('price_level', $tierPriceLevel)->first()?->price
+                ?? $product->prices->where('price_level', 1)->first()?->price
+                ?? $product->base_price ?? 0;
+            $originalPrice = $product->prices->where('price_level', 1)->first()?->price ?? $product->base_price ?? 0;
 
             if ($qty > $product->current_stock) {
                 return redirect()->route('produk.show', $productId)
@@ -370,6 +378,7 @@ class CustomerController extends Controller
                 'image' => $product->images->first() ? asset('storage/' . $product->images->first()->image_path) : null,
                 'qty' => $qty,
                 'price' => $price,
+                'original_price' => $originalPrice,
                 'subtotal' => $price * $qty,
                 'stock' => $product->current_stock,
             ];
@@ -384,7 +393,10 @@ class CustomerController extends Controller
             }
 
             foreach ($cartItems as $item) {
-                $price = $item->product->prices->where('price_level', 1)->first()->price ?? 0;
+                $price = $item->product->prices->where('price_level', $tierPriceLevel)->first()?->price
+                    ?? $item->product->prices->where('price_level', 1)->first()?->price
+                    ?? $item->product->base_price ?? 0;
+                $originalPrice = $item->product->prices->where('price_level', 1)->first()?->price ?? $item->product->base_price ?? 0;
 
                 if ($item->qty > $item->product->current_stock) {
                     return redirect()->route('cart.index')
@@ -398,6 +410,7 @@ class CustomerController extends Controller
                     'image' => $item->product->images->first() ? asset('storage/' . $item->product->images->first()->image_path) : null,
                     'qty' => $item->qty,
                     'price' => $price,
+                    'original_price' => $originalPrice,
                     'subtotal' => $price * $item->qty,
                     'stock' => $item->product->current_stock,
                 ];
@@ -405,7 +418,7 @@ class CustomerController extends Controller
             }
         }
 
-        $ongkosKirim = 26000;
+        $ongkosKirim = 0;
         $total = $subtotal + $ongkosKirim;
 
         $cartCount = Cart::where('user_id', Auth::id())->sum('qty');
@@ -414,12 +427,12 @@ class CustomerController extends Controller
         return view('checkout', compact(
             'checkoutItems',
             'subtotal',
-            'ongkosKirim',
             'total',
             'productId',
             'qty',
             'cartCount',
-            'wishlistCount'
+            'wishlistCount',
+            'tierPriceLevel'
         ));
     }
 
@@ -434,6 +447,12 @@ class CustomerController extends Controller
         $grossAmount = 0;
         $itemDetails = [];
         $dbDetails = [];
+        
+        $tierPriceLevel = 1;
+        $activeTier = Auth::user()->activeTier;
+        if ($activeTier) {
+            $tierPriceLevel = $activeTier->price_level;
+        }
 
         if ($request->has('product_id')) {
             $product = Product::with('prices')->findOrFail($request->product_id);
@@ -446,7 +465,9 @@ class CustomerController extends Controller
                 ], 400);
             }
 
-            $price = $product->prices->where('price_level', 1)->first()->price ?? 0;
+            $price = $product->prices->where('price_level', $tierPriceLevel)->first()?->price
+                ?? $product->prices->where('price_level', 1)->first()?->price
+                ?? $product->base_price ?? 0;
 
             $itemDetails[] = [
                 'id' => $product->id,
@@ -479,7 +500,9 @@ class CustomerController extends Controller
                     ], 400);
                 }
 
-                $price = $item->product->prices->where('price_level', 1)->first()->price ?? 0;
+                $price = $item->product->prices->where('price_level', $tierPriceLevel)->first()?->price
+                    ?? $item->product->prices->where('price_level', 1)->first()?->price
+                    ?? $item->product->base_price ?? 0;
 
                 if ($price > 0) {
                     $itemDetails[] = [
@@ -500,8 +523,20 @@ class CustomerController extends Controller
             }
         }
 
+        $ongkosKirim = 0;
+        $grossAmount += $ongkosKirim;
+
         if ($grossAmount <= 0) {
             return response()->json(['status' => 'error', 'message' => 'Total tagihan Rp 0.'], 400);
+        }
+
+        if ($ongkosKirim > 0) {
+            $itemDetails[] = [
+                'id' => 'SHIPPING',
+                'price' => $ongkosKirim,
+                'quantity' => 1,
+                'name' => 'Biaya Pengiriman',
+            ];
         }
 
         $params = [
