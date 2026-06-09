@@ -222,10 +222,16 @@ class CustomerController extends Controller
             ->latest()
             ->get();
 
+        $tierPriceLevel = 1; 
+        $activeTier = Auth::user()->activeTier;
+        if ($activeTier) {
+            $tierPriceLevel = $activeTier->price_level;
+        }
+
         $cartCount = Cart::where('user_id', Auth::id())->sum('qty');
         $wishlistCount = Wishlist::where('user_id', Auth::id())->count();
 
-        return view('wishlist.index', compact('wishlists', 'cartCount', 'wishlistCount'));
+        return view('wishlist.index', compact('wishlists', 'cartCount', 'wishlistCount', 'tierPriceLevel'));
     }
 
     public function toggleWishlist(Request $request, $product_id)
@@ -915,5 +921,25 @@ Pertanyaan pelanggan: ";
             DB::rollBack();
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
+    }
+
+    public function sendDataToLocal(Request $request)
+    {
+        // Validasi Token
+        $token = $request->header('X-Sync-Token');
+        if ($token !== 'PartLyfeSyncSecure999') { // Sesuaikan tokenmu
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized!'], 401);
+        }
+
+        $table = $request->query('table');
+        if (!$table) {
+            return response()->json(['status' => 'error', 'message' => 'Tabel tidak ditentukan'], 400);
+        }
+
+        // Ambil semua data dari cloud untuk dikirim ke lokal
+        $data = DB::table($table)->get();
+        $dataArray = json_decode(json_encode($data), true);
+
+        return response()->json(['status' => 'success', 'data' => $dataArray]);
     }
 }
