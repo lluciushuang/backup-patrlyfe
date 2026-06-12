@@ -20,86 +20,114 @@ class AiChatController extends Controller
             return response()->json(['status' => 'error', 'reply' => 'Pesan kosong.'], 400);
         }
 
-        $searchKeywords = $this->extractProductKeywords($userMessage);
+        $apiKey = env('GEMINI_API_KEY') ?: config('services.gemini.key');
 
-        if (! empty($searchKeywords)) {
-            $products = $this->searchProducts($searchKeywords);
-
-            if ($products->isNotEmpty()) {
-                return response()->json([
-                    'status' => 'success',
-                    'reply' => 'Berikut rekomendasi sparepart yang cocok untuk kebutuhanmu:',
-                    'products' => $products->map(fn ($p) => $this->formatProduct($p)),
-                ]);
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'reply' => 'Maaf, saya tidak menemukan sparepart yang cocok. Coba kata kunci lain seperti: filter udara, kampas rem, oli motor, dll.',
-            ]);
+        if (! $apiKey) {
+            return $this->getDynamicFallback($userMessage);
         }
 
-        return $this->getAiResponse($userMessage);
-    }
+        try {
+            // 1. Tarik daftar nama produk yang ready untuk bahan rekomendasi
+            $availableProducts = Product::where('current_stock', '>', 0)->pluck('name')->toArray();
+            $itemsList = implode(', ', $availableProducts);
 
-    private function extractProductKeywords($message)
-    {
-        $keywords = [];
-        $lowerMessage = strtolower($message);
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $apiKey;
 
-        $sparepartKeywords = [
-            'filter' => ['filter udara', 'filter', 'filter oil', 'filter oli'],
-            'oli' => ['oli', 'oli motor', 'sae', 'gear oil', 'mineral'],
-            'kampas' => ['kampas', 'kampas rem', 'brake pad', 'brake lining'],
-            'busi' => ['busi', 'busi motor', 'spark plug', 'ngk', 'denso'],
-            'ban' => ['ban', 'ban motor', 'tire', 'tube', 'velg'],
-            'aki' => ['aki', 'aki motor', 'battery', 'accu'],
-            'lampu' => ['lampu', 'lampu motor', 'led', 'spotlight', 'tidak bisa menyala', 'mati', 'rusak'],
-            'kabel' => ['kabel', 'kabel busi', 'kabel tangga'],
-            'chain' => ['chain', 'roda gig', 'set chain', 'roller', 'sprocket'],
-            'carbu' => ['carburator', 'carbu', 'jet', 'needle'],
-            'ganti' => ['ganti', 'tuning', 'replace', 'service'],
-            'motor' => ['motor', 'honda', 'yamaha', 'suzuki', 'kawasaki'],
-            'vario' => ['vario', 'beat', 'scoopy', 'aerox'],
-            'starter' => ['starter', 'tidak bisa menyala', 'dinamo', 'kopling'],
-            'klakson' => ['klakson', 'klakson motor', 'horn', 'suara'],
-        ];
+            // 2. Prompt dibuat fokus pada percakapan montir yang menyebutkan produk toko
+            $systemInstruction = "Kamu adalah 'Mechanix', asisten montir virtual gaul dari PartLyfe. Jawab chat user seputar otomotif dengan ramah, santai, singkat, dan solutif menggunakan bahasa Indonesia.\n\n"
+                . "RULES UTAMA:\n"
+                . "- Sebutkan nama barang dari daftar produk toko kita jika relevan dengan keluhan atau pertanyaan user.\n"
+                . "- JANGAN merekomendasikan produk di luar list toko jika list toko memiliki barang yang cocok.\n\n"
+                . "DAFTAR PRODUK YANG TERSEDIA DI TOKO KITA:\n"
+                . $itemsList;
 
-        foreach ($sparepartKeywords as $key => $patterns) {
-            foreach ($patterns as $pattern) {
-                if (strpos($lowerMessage, $pattern) !== false) {
-                    $keywords[] = $key;
+            $response = Http::withoutVerifying()->timeout(12)->withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post($url, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => "Pertanyaan User: " . $userMessage],
+                        ],
+                    ],
+                ],
+                'systemInstruction' => [
+                    'parts' => [
+                        ['text' => $systemInstruction],
+                    ],
+                ],
+            ]);
+
+            if ($response->failed()) {
+                return $this->getDynamicFallback($userMessage);
+            }
+
+            $data = $response->json();
+            $aiReply = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+            if (! $aiReply) {
+                return $this->getDynamicFallback($userMessage);
+            }
+
+            // 3. DETEKSI PRODUK SECARA OTOMATIS BERDASARKAN JAWABAN GEMINI
+            $productsData = [];
+            $lowerReply = strtolower($aiReply);
+            
+            // Cari kecocokan kata kunci produk dari database untuk dimunculkan di card box
+            foreach ($availableProducts as $productName) {
+                $lowerProdName = strtolower($productName);
+                // Jika Gemini menyebutkan nama produk tersebut di dalam teks jawabannya, kita ambil produknya!
+                if (strpos($lowerReply, $lowerProdName) !== false || $this->checkKeywordOverlap($lowerReply, $lowerProdName)) {
+                    $matchedProduct = Product::with(['prices', 'images'])
+                        ->where('name', $productName)
+                        ->where('current_stock', '>', 0)
+                        ->first();
+                    
+                    if ($matchedProduct) {
+                        $productsData[] = $this->formatProduct($matchedProduct);
+                    }
+                }
+                
+                // Batasi maksimal 3 card produk saja yang tampil agar tidak kepenuhan
+                if (count($productsData) >= 3) {
                     break;
                 }
             }
-        }
 
-        return $keywords;
+            // Jika user nanya produk tapi deteksi teks gagal, cari alternatif manual via query nama
+            if (empty($productsData) && (strpos(strtolower($userMessage), 'oli') !== false || strpos(strtolower($userMessage), 'mpx') !== false)) {
+                $fallbackOli = Product::with(['prices', 'images'])
+                    ->where('name', 'LIKE', '%oli%')
+                    ->orWhere('name', 'LIKE', '%mpx%')
+                    ->where('current_stock', '>', 0)
+                    ->limit(2)
+                    ->get();
+                $productsData = $fallbackOli->map(fn ($p) => $this->formatProduct($p))->toArray();
+            }
+
+            // Ubah markdown **bold** ke tag HTML strong
+            $aiReplyHtml = preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', $aiReply);
+
+            return response()->json([
+                'status' => 'success',
+                'reply' => nl2br($aiReplyHtml),
+                'products' => array_values($productsData),
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->getDynamicFallback($userMessage);
+        }
     }
 
-    private function searchProducts($keywords)
-    {
-        $query = Product::with(['prices', 'images', 'category']);
-
-        $query->where(function ($q) use ($keywords) {
-            $first = true;
-            foreach ($keywords as $keyword) {
-                if ($first) {
-                    $q->where('name', 'LIKE', "%{$keyword}%")
-                        ->orWhere('brand', 'LIKE', "%{$keyword}%")
-                        ->orWhere('item_code', 'LIKE', "%{$keyword}%");
-                    $first = false;
-                } else {
-                    $q->orWhere('name', 'LIKE', "%{$keyword}%")
-                        ->orWhere('brand', 'LIKE', "%{$keyword}%")
-                        ->orWhere('item_code', 'LIKE', "%{$keyword}%");
-                }
+    // Fungsi pembantu untuk mencocokkan kata kunci parsial (misal: "oli mpx" cocok dengan "oli mpx 2")
+    private function checkKeywordOverlap($reply, $productName) {
+        $words = explode(' ', $productName);
+        foreach ($words as $word) {
+            if (strlen($word) > 3 && strpos($reply, $word) !== false) {
+                return true;
             }
-        });
-
-        $query->where('current_stock', '>', 0);
-
-        return $query->inRandomOrder()->limit(4)->get();
+        }
+        return false;
     }
 
     private function formatProduct($product)
@@ -120,84 +148,28 @@ class AiChatController extends Controller
         ];
     }
 
-    private function getAiResponse($userMessage)
-    {
-        $apiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY');
-
-        if (! $apiKey) {
-            return $this->getFallbackResponse($userMessage);
-        }
-
-        try {
-            $response = Http::withoutVerifying()->timeout(10)->withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='.$apiKey, [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $this->buildSystemPrompt($userMessage)],
-                        ],
-                    ],
-                ],
-            ]);
-
-            if ($response->failed()) {
-                return $this->getFallbackResponse($userMessage);
-            }
-
-            $data = $response->json();
-
-            if (isset($data['error'])) {
-                return $this->getFallbackResponse($userMessage);
-            }
-
-            $aiReply = $data['candidates'][0]['content']['parts'][0]['text'] ?? 'Waduh, mekanik AI lagi bengong nih.';
-            $aiReplyHtml = preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', $aiReply);
-
-            return response()->json([
-                'status' => 'success',
-                'reply' => nl2br($aiReplyHtml),
-            ]);
-
-        } catch (\Exception $e) {
-            return $this->getFallbackResponse($userMessage);
-        }
-    }
-
-    private function getFallbackResponse($userMessage)
+    private function getDynamicFallback($userMessage)
     {
         $lowerMsg = strtolower($userMessage);
-        $responses = [
-            'busi' => 'Busi rusak bisa jadi penyebab motor tidak bisa menyala. Rekomendasi: ganti busi dengan NGK atau Denso.',
-            'aki' => 'Aki habis atau lemah? Coba cek with voltmeter, bila <12V sebaiknya diganti.',
-            'starter' => 'Starter dinamo mungkin bermasalah. Cek kabel starter dan konektornya.',
-            'lampu' => 'Tidak ada listrik bisa dari busi atau aki. Periksa terlebih dahulu.',
-            'klakson' => 'Klakson tidak bunyi biasanya karena sistem charging tidak berfungsi. Cek aki, stator, atau regulator.',
-        ];
+        $productsData = [];
+        
+        $reply = "Halo Bos! Di PartLyfe kita menyediakan berbagai sparepart roda dua premium. Kamu lagi cari komponen spesifik apa nih buat motor kesayanganmu? Biar Mechanix bantu cek stoknya! 🛠️";
 
-        foreach ($responses as $key => $response) {
-            if (strpos($lowerMsg, $key) !== false) {
-                return response()->json(['status' => 'success', 'reply' => $response]);
-            }
+        // Query cerdas pada fallback: Jika user sebut oli, tampilkan oli asli dari DB!
+        if (strpos($lowerMsg, 'oli') !== false || strpos($lowerMsg, 'mpx') !== false) {
+            $reply = "Untuk produk oli mesin terbaik di PartLyfe, kami sangat merekomendasikan varian oli AHM MPX asli Honda untuk menjaga performa mesin tetap stabil dan irit, Bos!";
+            $products = Product::with(['prices', 'images'])->where('name', 'LIKE', '%oli%')->orWhere('name', 'LIKE', '%mpx%')->limit(2)->get();
+            $productsData = $products->map(fn ($p) => $this->formatProduct($p))->toArray();
+        } elseif (strpos($lowerMsg, 'rem') !== false || strpos($lowerMsg, 'kampas') !== false) {
+            $reply = "Safety nomor satu, Bos! Kampas rem kita punya kualitas cengkeraman pakem dan tahan panas.";
+            $products = Product::with(['prices', 'images'])->where('name', 'LIKE', '%kampas%')->orWhere('name', 'LIKE', '%rem%')->limit(2)->get();
+            $productsData = $products->map(fn ($p) => $this->formatProduct($p))->toArray();
         }
 
         return response()->json([
             'status' => 'success',
-            'reply' => 'Motor tidak bisa menyala biasanya masalah: busi, aki, atau kabel. Coba cek dulu busi dan aki, kalau masih error silakan hubungi service terdekat.',
+            'reply' => $reply,
+            'products' => array_values($productsData)
         ]);
-    }
-
-    private function buildSystemPrompt($userMessage)
-    {
-        return "Kamu adalah seorang asisten mekanik virtual yang pintar, ramah, dan gaul dari PartLyfe. Kamu bisa ngomong santai dan natural, tapi HANYA seputar sepeda motor dan sparepart roda dua. Jawablah dengan singkat, padat, dan helpful. 
-
-RULES PENTING:
-- Kamu BISA ajak ngomong tentang apa saja yang BERHUBUNGAN DENGAN SEPEDA MOTOR (tips perawatan, jenis motor, merk, problem solving, sparepart, dll)
-- Kamu TIDAK BOLEH menjawab pertanyaan di LUAR topik sepeda motor
-- Jika ditanya topik di luar motor, jawab dengan santai: 'Maaf bro, saya ini mekanik virtual, jadi cuma bisa obrolan seputar motor aja. Tanya aja soal motor, perawatan, atau sparepart!'
-- Gunakan bahasa Indonesia yang santai, pakai emoji sesekali biar fun
-- Kalau ada kesempatan rekomendasikan produk dari PartLyfe yang relevan
-
-Pertanyaan pelanggan: ".$userMessage;
     }
 }

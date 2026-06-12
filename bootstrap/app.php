@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // 🚀 BYPASS KETAT: Izinkan jalur sinkronisasi lokal lewat tanpa cegatan CSRF
+        $middleware->validateCsrfTokens(except: [
+            'checkout/callback', // Bantuan Midtrans jika ada
+            'sync/receive'       // Jalur Push Data dari laptop lokalmu
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

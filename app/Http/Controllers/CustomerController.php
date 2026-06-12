@@ -922,7 +922,7 @@ Pertanyaan pelanggan: ";
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
-
+    
     public function sendDataToLocal(Request $request)
     {
         // Validasi Token

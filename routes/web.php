@@ -127,6 +127,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('/pos/stock-in', [PosController::class, 'addStock'])->name('pos.stock-in.store');
 
 
-    // Jalur API untuk menadah sinkronisasi data dari lokal ke cloud
-    Route::post('/sync/receive', [CustomerController::class, 'receiveSyncData']);
 });
+
+ // Jalur API untuk menadah sinkronisasi data dari lokal ke cloud
+Route::post('/sync/receive', [CustomerController::class, 'receiveSyncData']);
+Route::get('/sync/pull', [CustomerController::class, 'sendDataToLocal']);
