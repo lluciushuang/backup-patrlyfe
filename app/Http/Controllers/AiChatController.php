@@ -153,7 +153,9 @@ class AiChatController extends Controller
         $lowerMsg = strtolower($userMessage);
         $productsData = [];
         
+
         $reply = "Halo Bos! Di PartLyfe kita menyediakan berbagai sparepart roda dua premium. Kamu lagi cari komponen spesifik apa nih buat motor kesayanganmu? Biar Mechanix bantu cek stoknya! 🛠️";
+
 
         // Query cerdas pada fallback: Jika user sebut oli, tampilkan oli asli dari DB!
         if (strpos($lowerMsg, 'oli') !== false || strpos($lowerMsg, 'mpx') !== false) {

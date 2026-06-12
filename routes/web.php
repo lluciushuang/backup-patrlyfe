@@ -132,3 +132,4 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
  // Jalur API untuk menadah sinkronisasi data dari lokal ke cloud
 Route::post('/sync/receive', [CustomerController::class, 'receiveSyncData']);
 Route::get('/sync/pull', [CustomerController::class, 'sendDataToLocal']);
+
