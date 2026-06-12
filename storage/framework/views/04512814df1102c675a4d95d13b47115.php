@@ -61,11 +61,11 @@
         </table>
     </div>
 
-    <?php if($orders->hasPages()): ?>
-    <div style="margin-top:1.5rem;">
-        <?php echo e($orders->links()); ?>
+<?php if($orders->hasPages()): ?>
+     <div style="margin-top:1.5rem;">
+         <?php echo e($orders->links('pagination::admin')); ?>
 
-    </div>
-    <?php endif; ?>
+     </div>
+     <?php endif; ?>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\lenna\Herd\partlyfe_satu\resources\views/admin/orders/index.blade.php ENDPATH**/ ?>

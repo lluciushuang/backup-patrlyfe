@@ -61,9 +61,9 @@
         </table>
     </div>
 
-    @if($orders->hasPages())
-    <div style="margin-top:1.5rem;">
-        {{ $orders->links() }}
-    </div>
-    @endif
+@if($orders->hasPages())
+     <div style="margin-top:1.5rem;">
+         {{ $orders->links('pagination::admin') }}
+     </div>
+     @endif
 @endsection
