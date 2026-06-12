@@ -111,7 +111,7 @@
             <div class="stat-icon" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">💰</div>
         </div>
         <div class="stat-value">Rp {{ number_format($todayRevenue, 0, ',', '.') }}</div>
-        <div class="stat-desc success">↑ 15% dari kemarin</div>
+        <div class="stat-desc">Pendapatan hari ini.</div>
     </div>
     <!-- Card 3: Stok Kritis -->
     <div class="stat-card" data-target="section-stok">
@@ -252,6 +252,9 @@
         </div>
         <div class="chart-container">
             <canvas id="cashflowChart"></canvas>
+            @if(empty($monthlyRevenueLabels))
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--gray-mid); font-size: 0.85rem;">Belum ada data pendapatan</div>
+            @endif
         </div>
     </div>
 
@@ -263,6 +266,9 @@
         </div>
         <div class="chart-container">
             <canvas id="categoryChart"></canvas>
+            @if(empty($salesByCategoryLabels))
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--gray-mid); font-size: 0.85rem;">Belum ada data penjualan kategori</div>
+            @endif
         </div>
     </div>
 
@@ -408,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data: {
                 labels: monthlyLabels,
                 datasets: [
-                    { label: 'Pendapatan', data: monthlyData, backgroundColor: '#22c55e', borderRadius: 4 }
+                    { label: 'Pendapatan', data: @json($monthlyRevenueData), backgroundColor: '#22c55e', borderRadius: 4 }
                 ]
             },
             options: {

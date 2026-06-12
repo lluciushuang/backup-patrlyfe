@@ -274,6 +274,20 @@ class CustomerController extends Controller
         return back()->with('success', $message);
     }
 
+    public function removeFromWishlist($id)
+    {
+        $wishlist = Wishlist::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $wishlist->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk berhasil dihapus dari wishlist.',
+        ]);
+    }
+
     public function broadcasts(Request $request)
     {
         $perPage = $request->input('per_page', 10);
