@@ -40,7 +40,7 @@ return [
     ],
 
     'google_maps' => [
-        'api_key' => env('GOOGLE_MAPS_API_KEY', 'AIzaSyAKUlgPvJ18TFTsJd-GwLVvxT5wOA2KGeU'),
+        'api_key' => env('GOOGLE_MAPS_API_KEY', 'sample_api'),
     ],
 
 ];
